@@ -38,7 +38,7 @@
     <header class="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
 
-            <a href="#" class="flex items-center">
+            <a href="{{ route('pricing') }}" class="flex items-center">
 
                 <!-- Icon -->
                 <div class="flex items-center justify-center w-11 h-11">
@@ -65,22 +65,21 @@
 
             </a>
 
-            <!-- Navigation -->
             <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
 
-                <a href="#features" class="hover:text-blue-600 transition">
+                <a href="/#features" class="hover:text-blue-600 transition">
                     Features
                 </a>
 
-                <a href="#solutions" class="hover:text-blue-600 transition">
+                <a href="/#solutions" class="hover:text-blue-600 transition">
                     Solutions
                 </a>
 
-                <a href="#how-it-works" class="hover:text-blue-600 transition">
+                <a href="/#how-it-works" class="hover:text-blue-600 transition">
                     How it works
                 </a>
 
-                <a href="#pricing" class="hover:text-blue-600 transition">
+                <a href="/#pricing" class="hover:text-blue-600 transition">
                     Pricing
                 </a>
 

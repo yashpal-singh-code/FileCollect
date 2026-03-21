@@ -29,6 +29,11 @@ use App\Http\Controllers\Owner\OwnerUserController;
 Route::get('/', [HomeController::class, 'index'])->name('pricing');
 Route::post('/select-plan', [HomeController::class, 'select'])->name('select.plan')->middleware('throttle:10,1');
 
+Route::view('/features', 'website.features');
+Route::view('/pricing-page', 'website.pricing');
+Route::view('/how-it-works', 'website.how');
+Route::view('/blog', 'website.blog');
+
 // Stripe Webhook (No Auth Required)
 Route::post('/stripe/webhook', [WebhookController::class, 'handleWebhook']);
 
