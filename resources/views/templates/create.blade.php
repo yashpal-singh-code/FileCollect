@@ -270,7 +270,7 @@
     </div>
 
     {{-- ALPINE --}}
-    {{-- <script>
+    <script>
         function documentBuilder(oldFields = null) {
             return {
 
@@ -307,5 +307,5 @@
                 }
             }
         }
-    </script> --}}
+    </script>
 @endsection
