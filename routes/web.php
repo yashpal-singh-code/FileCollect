@@ -29,10 +29,16 @@ use App\Http\Controllers\Owner\OwnerUserController;
 Route::get('/', [HomeController::class, 'index'])->name('pricing');
 Route::post('/select-plan', [HomeController::class, 'select'])->name('select.plan')->middleware('throttle:10,1');
 
-Route::view('/features', 'website.features');
-Route::view('/pricing-page', 'website.pricing');
-Route::view('/how-it-works', 'website.how');
-Route::view('/blog', 'website.blog');
+Route::view('/features', 'website.features')->name('features');
+Route::view('/pricing-page', 'website.pricing')->name('pricing.page');
+Route::view('/how-it-works', 'website.how')->name('how.it.works');
+Route::view('/blog', 'website.blog')->name('blog');
+
+Route::prefix('legal')->name('legal.')->group(function () {
+
+    Route::view('/terms', 'legal.terms')->name('terms');
+    Route::view('/privacy', 'legal.privacy')->name('privacy');
+});
 
 // Stripe Webhook (No Auth Required)
 Route::post('/stripe/webhook', [WebhookController::class, 'handleWebhook']);
@@ -171,11 +177,4 @@ Route::prefix('owner')->name('owner.')->middleware(['auth', 'verified', 'role:ow
     Route::get('/settings', [OwnerSettingController::class, 'index'])->name('settings');
 
     Route::post('/settings', [OwnerSettingController::class, 'update'])->name('settings.update');
-});
-
-
-Route::prefix('legal')->name('legal.')->group(function () {
-
-    Route::view('/terms', 'legal.terms')->name('terms');
-    Route::view('/privacy', 'legal.privacy')->name('privacy');
 });
