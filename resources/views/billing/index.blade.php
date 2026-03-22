@@ -48,11 +48,11 @@
                 Initializing Razorpay subscription...
             </p>
 
-            <!-- HINT -->
+            {{-- <!-- HINT -->
             <div class="flex items-center justify-center gap-2 text-xs text-gray-500">
                 <x-lucide-info class="w-4 h-4" />
                 <span>Use UPI: <span class="font-medium text-gray-700">success@razorpay</span></span>
-            </div>
+            </div> --}}
 
             <!-- ERROR -->
             <div id="error" class="text-sm text-red-600 flex items-start gap-2">
