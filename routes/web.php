@@ -48,6 +48,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/billing', [SubscriptionController::class, 'billing'])->name('billing');
     Route::post('/subscriptions/create', [SubscriptionController::class, 'create']);
     Route::post('/subscriptions/verify', [SubscriptionController::class, 'verify']);
+    Route::post('/subscriptions/failed', [SubscriptionController::class, 'failed']);
 });
 
 // Tenant Routes

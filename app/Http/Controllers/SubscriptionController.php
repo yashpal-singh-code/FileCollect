@@ -190,9 +190,24 @@ class SubscriptionController extends Controller
 
             // 🔥 If still pending (created) → block
             if ($existing && $existing->status === 'created') {
-                return response()->json([
-                    'error' => 'Pending subscription exists. Please complete payment first.'
-                ], 400);
+
+                // 🔥 Cancel old pending subscription (failed attempt)
+                try {
+                    if ($existing->razorpay_subscription_id) {
+                        $this->api->subscription
+                            ->fetch($existing->razorpay_subscription_id)
+                            ->cancel();
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Cancel failed pending subscription', [
+                        'message' => $e->getMessage()
+                    ]);
+                }
+
+                // ✅ VERY IMPORTANT: update DB status
+                $existing->update([
+                    'status' => 'failed'
+                ]);
             }
 
             $plan = Plan::where('slug', $request->plan)->firstOrFail();
@@ -326,6 +341,27 @@ class SubscriptionController extends Controller
         }
     }
 
+    public function failed(Request $request)
+    {
+        try {
+
+            $subId = $request->subscription_id;
+
+            if ($subId) {
+                Subscription::where('razorpay_subscription_id', $subId)
+                    ->update(['status' => 'failed']);
+            }
+
+            return response()->json(['status' => 'ok']);
+        } catch (\Exception $e) {
+
+            Log::error('Failed payment update error', [
+                'message' => $e->getMessage()
+            ]);
+
+            return response()->json(['error' => 'Failed'], 500);
+        }
+    }
     /*
     |--------------------------------------------------------------------------
     | CANCEL SUBSCRIPTION

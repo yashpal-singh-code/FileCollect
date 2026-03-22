@@ -186,8 +186,27 @@
 
             let rzp = new Razorpay(options);
 
-            rzp.on('payment.failed', function(response) {
-                showError(response.error.description || "Payment failed. Use UPI.");
+            rzp.on('payment.failed', async function(response) {
+
+                console.log(response.error);
+
+                showError(response.error.description || "Payment failed. Please try again.");
+
+                // 🔥 CALL BACKEND TO MARK FAILED
+                try {
+                    await fetch('/subscriptions/failed', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrf
+                        },
+                        body: JSON.stringify({
+                            subscription_id: response.error.metadata.subscription_id || null
+                        })
+                    });
+                } catch (e) {
+                    console.log("Failed to notify backend");
+                }
             });
 
             rzp.open();
