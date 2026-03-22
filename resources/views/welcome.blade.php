@@ -538,27 +538,100 @@
 
                         </div>
 
-                        <!-- Limits -->
                         <ul class="space-y-3 text-sm mb-6">
+
+                            {{-- 👥 Core Limits --}}
                             <li class="flex items-center gap-2">
                                 <x-lucide-users class="w-4 h-4 text-slate-500" />
-                                {{ $plan->company_users }} Company Users
+                                {{ $plan->company_users ?? 'Unlimited' }} Company Users
                             </li>
 
                             <li class="flex items-center gap-2">
                                 <x-lucide-user class="w-4 h-4 text-slate-500" />
-                                {{ $plan->clients }} Clients
+                                {{ $plan->clients ?? 'Unlimited' }} Clients
                             </li>
 
                             <li class="flex items-center gap-2">
                                 <x-lucide-file-text class="w-4 h-4 text-slate-500" />
-                                {{ $plan->document_requests }} Document Requests
+                                {{ $plan->document_requests ?? 'Unlimited' }} Document Requests
                             </li>
 
                             <li class="flex items-center gap-2">
                                 <x-lucide-layout-template class="w-4 h-4 text-slate-500" />
-                                {{ $plan->template_limit }} Templates
+                                {{ $plan->template_limit ?? 'Unlimited' }} Templates
                             </li>
+
+                            <li class="flex items-center gap-2">
+                                <x-lucide-copy class="w-4 h-4 text-slate-500" />
+                                {{ $plan->request_templates ?? 'Unlimited' }} Request Templates
+                            </li>
+
+                            {{-- 💾 Storage --}}
+                            <li class="flex items-center gap-2">
+                                <x-lucide-hard-drive class="w-4 h-4 text-slate-500" />
+                                {{ $plan->storage_mb }} MB Storage
+                            </li>
+
+                            <li class="flex items-center gap-2">
+                                <x-lucide-upload class="w-4 h-4 text-slate-500" />
+                                {{ $plan->file_size_limit_mb }} MB File Size Limit
+                            </li>
+
+                            {{-- 🔁 Reset --}}
+                            <li class="flex items-center gap-2">
+                                <x-lucide-refresh-cw class="w-4 h-4 text-slate-500" />
+                                {{ ucfirst($plan->usage_reset_type) }} Usage Reset
+                            </li>
+
+                            {{-- 📦 Upload Features --}}
+                            <li class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <x-lucide-archive class="w-4 h-4 text-slate-500" />
+                                    <span>ZIP Upload</span>
+                                </div>
+                                @if ($plan->allow_zip)
+                                    <span class="flex items-center gap-1 text-green-600 text-xs font-medium">
+                                        <x-lucide-check class="w-4 h-4" /> Enabled
+                                    </span>
+                                @else
+                                    <span class="flex items-center gap-1 text-red-500 text-xs font-medium">
+                                        <x-lucide-x class="w-4 h-4" /> Disabled
+                                    </span>
+                                @endif
+                            </li>
+
+                            {{-- 🚀 Feature Flags --}}
+                            @php
+                                $features = [
+                                    'Client Portal' => $plan->client_portal,
+                                    'MFA Authentication' => $plan->mfa_authentication,
+                                    'Download ZIP' => $plan->download_zip,
+                                    'Expiry Tracking' => $plan->expiry_tracking,
+                                    'Branding' => $plan->branding,
+                                    'White Label' => $plan->white_label,
+                                    'Priority Support' => $plan->priority_support,
+                                ];
+                            @endphp
+
+                            @foreach ($features as $label => $enabled)
+                                <li class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <x-lucide-check-circle class="w-4 h-4 text-slate-500" />
+                                        <span>{{ $label }}</span>
+                                    </div>
+
+                                    @if ($enabled)
+                                        <span class="flex items-center gap-1 text-green-600 text-xs font-medium">
+                                            <x-lucide-check class="w-4 h-4" />
+                                        </span>
+                                    @else
+                                        <span class="flex items-center gap-1 text-red-400 text-xs font-medium">
+                                            <x-lucide-x class="w-4 h-4" />
+                                        </span>
+                                    @endif
+                                </li>
+                            @endforeach
+
                         </ul>
 
                         <!-- CTA BUTTON -->
