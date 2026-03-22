@@ -37,22 +37,42 @@ return [
 
 
 
-    'stripe' => [
-        'key' => env('STRIPE_KEY'),
-        'secret' => env('STRIPE_SECRET'),
+    // 'stripe' => [
+    //     'key' => env('STRIPE_KEY'),
+    //     'secret' => env('STRIPE_SECRET'),
+
+    //     'plans' => [
+    //         'starter' => [
+    //             'monthly' => env('STRIPE_STARTER_MONTHLY'),
+    //             'yearly'  => env('STRIPE_STARTER_YEARLY'),
+    //         ],
+    //         'growth' => [
+    //             'monthly' => env('STRIPE_GROWTH_MONTHLY'),
+    //             'yearly'  => env('STRIPE_GROWTH_YEARLY'),
+    //         ],
+    //         'pro' => [
+    //             'monthly' => env('STRIPE_PRO_MONTHLY'),
+    //             'yearly'  => env('STRIPE_PRO_YEARLY'),
+    //         ],
+    //     ],
+    // ],
+
+    'razorpay' => [
+        'key' => env('RAZORPAY_KEY'),
+        'secret' => env('RAZORPAY_SECRET'),
 
         'plans' => [
             'starter' => [
-                'monthly' => env('STRIPE_STARTER_MONTHLY'),
-                'yearly'  => env('STRIPE_STARTER_YEARLY'),
+                'monthly' => env('RAZORPAY_STARTER_MONTHLY'),
+                'yearly'  => env('RAZORPAY_STARTER_YEARLY'),
             ],
             'growth' => [
-                'monthly' => env('STRIPE_GROWTH_MONTHLY'),
-                'yearly'  => env('STRIPE_GROWTH_YEARLY'),
+                'monthly' => env('RAZORPAY_GROWTH_MONTHLY'),
+                'yearly'  => env('RAZORPAY_GROWTH_YEARLY'),
             ],
             'pro' => [
-                'monthly' => env('STRIPE_PRO_MONTHLY'),
-                'yearly'  => env('STRIPE_PRO_YEARLY'),
+                'monthly' => env('RAZORPAY_PRO_MONTHLY'),
+                'yearly'  => env('RAZORPAY_PRO_YEARLY'),
             ],
         ],
     ],

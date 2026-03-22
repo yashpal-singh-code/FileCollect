@@ -69,9 +69,8 @@ class PlanSeeder extends Seeder
                     'is_active' => true,
                     'sort_order' => 2,
 
-                    'stripe_product_id' => env('STRIPE_STARTER_PRODUCT'),
-                    'stripe_price_monthly' => env('STRIPE_STARTER_MONTHLY'),
-                    'stripe_price_yearly' => env('STRIPE_STARTER_YEARLY'),
+                    'razorpay_plan_monthly' => env('RAZORPAY_STARTER_MONTHLY'),
+                    'razorpay_plan_yearly' => env('RAZORPAY_STARTER_YEARLY'),
 
                     'company_users' => 2,
                     'clients' => 50,
@@ -105,9 +104,8 @@ class PlanSeeder extends Seeder
                     'is_active' => true,
                     'sort_order' => 3,
 
-                    'stripe_product_id' => env('STRIPE_GROWTH_PRODUCT'),
-                    'stripe_price_monthly' => env('STRIPE_GROWTH_MONTHLY'),
-                    'stripe_price_yearly' => env('STRIPE_GROWTH_YEARLY'),
+                    'razorpay_plan_monthly' => env('RAZORPAY_GROWTH_MONTHLY'),
+                    'razorpay_plan_yearly' => env('RAZORPAY_GROWTH_YEARLY'),
 
                     'company_users' => 10,
                     'clients' => 100,
@@ -141,9 +139,8 @@ class PlanSeeder extends Seeder
                     'is_active' => true,
                     'sort_order' => 4,
 
-                    'stripe_product_id' => env('STRIPE_PRO_PRODUCT'),
-                    'stripe_price_monthly' => env('STRIPE_PRO_MONTHLY'),
-                    'stripe_price_yearly' => env('STRIPE_PRO_YEARLY'),
+                    'razorpay_plan_monthly' => env('RAZORPAY_PRO_MONTHLY'),
+                    'razorpay_plan_yearly' => env('RAZORPAY_PRO_YEARLY'),
 
                     'company_users' => 25,
                     'clients' => 500,

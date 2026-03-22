@@ -2,495 +2,590 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Client;
-use App\Models\DocumentRequest;
-use App\Models\DocumentUpload;
+use App\Models\CompanySetting;
+use App\Models\Invoice;
 use Illuminate\Http\Request;
+use Razorpay\Api\Api;
+use App\Models\Subscription;
 use App\Models\Plan;
-use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use App\Models\User;
 
 class SubscriptionController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Subscription Overview
-    |--------------------------------------------------------------------------
-    */
-    public function index(Request $request)
+    protected $api;
+
+    public function __construct()
     {
-        // Get authenticated user
-        $user = $request->user();
+        $this->api = new Api(
+            config('services.razorpay.key'),
+            config('services.razorpay.secret')
+        );
+    }
 
-        // Get subscription
-        $subscription = $user->subscription('default');
+    public function processPlan()
+    {
+        $planSlug = session('selected_plan');
+        $billing  = session('selected_billing');
 
-        // Get payment methods
-        $paymentMethods = $user->paymentMethods();
-
-        // Get default payment method
-        $defaultPaymentMethod = $user->defaultPaymentMethod();
-
-        // Initialize variables
-        $activePlan = null;
-        $activeBilling = 'monthly';
-        $currentPeriodEnd = null;
-
-        // Detect active subscription plan
-        if ($subscription && $subscription->valid()) {
-
-            // Ensure subscription items loaded
-            $subscription->loadMissing('items');
-
-            // Get first subscription item
-            $currentItem = $subscription->items->first();
-
-            // Get Stripe price ID
-            $currentPriceId = $currentItem?->stripe_price;
-
-            // Detect active plan from price ID
-            $activePlan = Plan::where(function ($query) use ($currentPriceId) {
-
-                $query->where('stripe_price_monthly', $currentPriceId)
-                    ->orWhere('stripe_price_yearly', $currentPriceId);
-            })->first();
-
-            // Detect billing cycle
-            if ($activePlan) {
-
-                $activeBilling = $currentPriceId === $activePlan->stripe_price_yearly
-                    ? 'yearly'
-                    : 'monthly';
-            }
-
-            // Get Stripe subscription details
-            try {
-
-                $stripeSub = $subscription->asStripeSubscription();
-
-                $currentPeriodEnd = $stripeSub->current_period_end ?? null;
-            } catch (\Exception $e) {
-
-                $currentPeriodEnd = null;
-            }
+        if (!$planSlug || !$billing) {
+            return redirect('/')->with('error', 'Invalid plan selection');
         }
 
-        // Free plan fallback if no active plan
-        if (!$activePlan) {
+        $plan = Plan::where('slug', $planSlug)->first();
 
+        if (!$plan) {
+            return redirect('/');
+        }
+
+        // ✅ FREE PLAN
+        if ($plan->is_free) {
+
+            /** @var User $user */
+            $user = Auth::user();
+
+            $user->update([
+                'plan_id' => $plan->id,
+                'billing_cycle' => null, // ✅ FIXED
+            ]);
+
+            session()->forget(['selected_plan', 'selected_billing']);
+
+            return redirect('/dashboard')->with('success', 'Free plan activated!');
+        }
+
+        return redirect()->route('billing');
+    }
+
+
+    public function billing()
+    {
+        $planSlug = session('selected_plan');
+        $billing  = session('selected_billing');
+
+        $plan = Plan::where('slug', $planSlug)->first();
+
+        // ✅ FIX: session expired protection
+        if (!$plan) {
+            return redirect('/dashboard')->with('error', 'Session expired');
+        }
+
+        return view('billing.index', compact('plan', 'billing'));
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | BILLING DASHBOARD
+    |--------------------------------------------------------------------------
+    */
+    public function index()
+    {
+        $user = Auth::user();
+
+        // ✅ Latest subscription
+        $subscription = Subscription::where('user_id', $user->id)
+            ->latest()
+            ->first();
+
+        $activePlan = null;
+
+        // ✅ If ACTIVE → map plan from razorpay
+        if ($subscription && $subscription->status === 'active') {
+            $activePlan = Plan::where(function ($q) use ($subscription) {
+                $q->where('razorpay_plan_monthly', $subscription->plan_id)
+                    ->orWhere('razorpay_plan_yearly', $subscription->plan_id);
+            })->first();
+        }
+
+        // ✅ If cancelled/completed → FORCE FREE
+        if ($subscription && in_array($subscription->status, ['cancelled', 'completed'])) {
             $activePlan = Plan::where('is_free', true)->first();
         }
 
-        // Get account owner
-        $owner = $user->getAccountOwner();
+        // ✅ No subscription OR active fallback
+        if (!$subscription || $subscription->status === 'active') {
+            $activePlan = $activePlan ?: Plan::find($user->plan_id);
+        }
 
-        // Collect usage statistics
-        $usage = [
+        // ✅ billing
+        $activeBilling = $subscription->type ?? $user->billing_cycle ?? 'monthly';
 
-            // Company users
-            'users' => User::count(),
+        // ✅ next billing only if active
+        $nextBillingDate = null;
 
-            // Clients
-            'clients' => Client::where('owner_id', $owner->id)->count(),
+        if ($subscription && $subscription->status === 'active') {
+            $nextBillingDate = $subscription->type === 'yearly'
+                ? $subscription->created_at->copy()->addYear()
+                : $subscription->created_at->copy()->addMonth();
+        }
 
-            // Document requests
-            'requests' => DocumentRequest::where('owner_id', $owner->id)->count(),
+        $plans = Plan::active()->ordered()->get();
 
-            // Storage used (MB)
-            'storage' => round(
-                DocumentUpload::where('owner_id', $owner->id)
-                    ->sum('file_size') / 1024 / 1024
-            ),
-        ];
-
-        // Load all available plans
-        $plans = Plan::active()
-            ->orderBy('monthly_price')
+        $invoices = Invoice::where('user_id', $user->id)
+            ->latest()
+            ->take(10) // latest 10 (can change)
             ->get();
 
-        // Mark active plan
-        foreach ($plans as $plan) {
-
-            if ($subscription && $subscription->valid()) {
-
-                $plan->is_active = $activePlan && $activePlan->id === $plan->id;
-            } else {
-
-                $plan->is_active = $plan->isFree();
-            }
-        }
-
-        // Get Stripe customer
-        $customer = $user->asStripeCustomer();
-
-        // Return billing dashboard view
-        return view('subscriptions.index', [
-
-            'user' => $user,
-
-            'subscription' => $subscription,
-
-            'activePlan' => $activePlan,
-
-            'activeBilling' => $activeBilling,
-
-            'currentPeriodEnd' => $currentPeriodEnd,
-
-            'plans' => $plans,
-
-            'usage' => $usage,
-
-            'paymentMethods' => $paymentMethods,
-
-            'paymentMethod' => $defaultPaymentMethod,
-
-            'invoices' => $user->invoicesIncludingPending(),
-
-            'customer' => $customer,
-        ]);
-    }
-    /*
-    |--------------------------------------------------------------------------
-    | Checkout (From Pricing Page)
-    |--------------------------------------------------------------------------
-    */
-    public function checkout(Request $request)
-    {
-        $user = $request->user();
-
-        $request->validate([
-            'plan'    => ['required', 'string'],
-            'billing' => ['required', 'in:monthly,yearly'],
-        ]);
-
-        $plan = Plan::active()
-            ->where('slug', $request->plan)
-            ->firstOrFail();
-
-        /*
-        |--------------------------------------------------------------------------
-        | FREE PLAN
-        |--------------------------------------------------------------------------
-        */
-        if ($plan->isFree()) {
-
-            DB::transaction(function () use ($user, $plan) {
-
-                $subscription = $user->subscription('default');
-
-                if ($subscription && !$subscription->ended()) {
-                    $subscription->cancelNow();
-                }
-
-                $user->update([
-                    'plan_id' => $plan->id,
-                    'billing_cycle' => 'monthly',
-                ]);
-            });
-
-            return redirect()->route('dashboard')
-                ->with('success', 'Switched to Free plan successfully.');
-        }
-
-        $priceId = $plan->getStripePrice($request->billing);
-
-        if (!$priceId) {
-            return back()->with('error', 'Stripe price not configured.');
-        }
-
-        if ($user->hasIncompletePayment('default')) {
-            return redirect()->route(
-                'cashier.payment',
-                $user->subscription('default')->latestPayment()->id
-            );
-        }
-
-        $subscription = $user->subscription('default');
-
-        if (!$subscription || $subscription->ended()) {
-
-            return $user->newSubscription('default', $priceId)
-                ->checkout([
-                    'success_url' => route('dashboard'),
-                    'cancel_url'  => route('pricing'),
-                    'customer_update' => ['address' => 'auto'],
-                ]);
-        }
-
-        return $this->handleSwapLogic($user, $priceId);
+        return view('subscriptions.index', compact(
+            'subscription',
+            'activePlan',
+            'activeBilling',
+            'nextBillingDate',
+            'plans',
+            'invoices' // 🔥 add this
+        ));
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Swap (Dashboard)
+    | CREATE SUBSCRIPTION
     |--------------------------------------------------------------------------
     */
-    public function swap(Request $request)
+    public function create(Request $request)
     {
-        $request->validate([
-            'plan'    => ['required', 'string'],
-            'billing' => ['required', 'in:monthly,yearly'],
-        ]);
-
-        $user = $request->user();
-
-        $plan = Plan::active()
-            ->where('slug', $request->plan)
-            ->firstOrFail();
-
-        if ($plan->isFree()) {
-            return redirect()->route('pricing')
-                ->with('error', 'Use pricing page to switch to Free plan.');
-        }
-
-        $priceId = $plan->getStripePrice($request->billing);
-
-        if (!$priceId) {
-            return back()->with('error', 'Stripe price not configured.');
-        }
-
-        $subscription = $user->subscription('default');
-
-        if (!$subscription || $subscription->ended()) {
-            return $user->newSubscription('default', $priceId)
-                ->checkout([
-                    'success_url' => route('dashboard'),
-                    'cancel_url'  => route('pricing'),
-                ]);
-        }
-
-        return $this->handleSwapLogic($user, $priceId);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Shared Upgrade / Downgrade Logic (Stripe Safe)
-    |--------------------------------------------------------------------------
-    */
-    private function handleSwapLogic($user, $priceId)
-    {
-        $subscription = $user->subscription('default');
-
         try {
 
-            $subscription->loadMissing('items');
+            $request->validate([
+                'plan' => 'required|string',
+                'billing' => 'required|in:monthly,yearly',
+            ]);
 
-            $currentItem = $subscription->items->first();
-            $currentPriceId = $currentItem?->stripe_price;
+            $user = Auth::user();
 
-            if ($currentPriceId === $priceId) {
-                return back()->with('info', 'You are already on this plan.');
-            }
+            // 🔥 Get latest subscription
+            $existing = Subscription::where('user_id', $user->id)
+                ->latest()
+                ->first();
 
-            // Get current plan from DB
-            $currentPlan = Plan::where(function ($query) use ($currentPriceId) {
-                $query->where('stripe_price_monthly', $currentPriceId)
-                    ->orWhere('stripe_price_yearly', $currentPriceId);
-            })->first();
+            // 🔥 If active → cancel it first (upgrade/downgrade flow)
+            if ($existing && $existing->status === 'active') {
 
-            // Get new plan from DB
-            $newPlan = Plan::where(function ($query) use ($priceId) {
-                $query->where('stripe_price_monthly', $priceId)
-                    ->orWhere('stripe_price_yearly', $priceId);
-            })->first();
+                try {
+                    if ($existing->razorpay_subscription_id) {
+                        $razorSub = $this->api->subscription->fetch(
+                            $existing->razorpay_subscription_id
+                        );
 
-            if (!$newPlan) {
-                return back()->with('error', 'Selected plan not found.');
-            }
-
-            // Determine billing cycle
-            $billing = $priceId === $newPlan->stripe_price_yearly
-                ? 'yearly'
-                : 'monthly';
-
-            // Compare using DB prices (NO Stripe API calls)
-            $currentAmount = $currentPlan?->monthly_price ?? 0;
-            $newAmount     = $newPlan->monthly_price ?? 0;
-
-            DB::transaction(function () use ($subscription, $priceId, $user, $newPlan, $billing, $newAmount, $currentAmount) {
-
-                if ($newAmount > $currentAmount) {
-
-                    // Upgrade → Immediate
-                    $subscription->swap($priceId);
-                } else {
-
-                    // Validate downgrade limits
-                    $limitError = $this->validateDowngradeLimits($user, $newPlan);
-
-                    if ($limitError) {
-                        throw new \Exception($limitError);
+                        if ($razorSub->status !== 'completed') {
+                            $razorSub->cancel();
+                        }
                     }
-
-                    // Downgrade without proration
-                    $subscription->noProrate()->swap($priceId);
+                } catch (\Exception $e) {
+                    Log::error('Auto cancel old subscription failed', [
+                        'message' => $e->getMessage()
+                    ]);
                 }
 
-                // 🔐 Sync DB plan with Stripe
-                $user->update([
-                    'plan_id' => $newPlan->id,
-                    'billing_cycle' => $billing,
+                // update DB
+                $existing->update([
+                    'status' => 'cancelled',
+                    'ends_at' => now()
                 ]);
-            });
+            }
 
-            return redirect()->route('dashboard')
-                ->with('success', 'Subscription updated successfully.');
-        } catch (\Throwable $e) {
+            // 🔥 If still pending (created) → block
+            if ($existing && $existing->status === 'created') {
+                return response()->json([
+                    'error' => 'Pending subscription exists. Please complete payment first.'
+                ], 400);
+            }
 
-            return back()->with('error', $e->getMessage() ?: 'Subscription update failed.');
+            $plan = Plan::where('slug', $request->plan)->firstOrFail();
+
+            $planId = $plan->getRazorpayPlanId($request->billing);
+
+            if (!$planId) {
+                return response()->json([
+                    'error' => 'Razorpay plan not configured'
+                ], 400);
+            }
+
+            $razorpaySub = $this->api->subscription->create([
+                'plan_id' => $planId,
+                'customer_notify' => 1,
+                'total_count' => $request->billing === 'monthly' ? 12 : 1,
+            ]);
+
+            $subscription = Subscription::create([
+                'user_id' => $user->id,
+                'type' => $request->billing,
+                'plan_id' => $planId,
+                'razorpay_subscription_id' => $razorpaySub['id'],
+                'status' => 'created',
+            ]);
+
+            return response()->json([
+                'id' => $razorpaySub['id']
+            ]);
+        } catch (\Exception $e) {
+
+            Log::error('Subscription Create Error', [
+                'message' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'error' => 'Subscription creation failed',
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Cancel Subscription
+    | VERIFY PAYMENT
+    |--------------------------------------------------------------------------
+    */
+    public function verify(Request $request)
+    {
+        try {
+
+            $request->validate([
+                'payment_id' => 'required',
+                'subscription_id' => 'required',
+                'signature' => 'required',
+            ]);
+
+            // ✅ Verify Razorpay signature
+            $this->api->utility->verifyPaymentSignature([
+                'razorpay_payment_id' => $request->payment_id,
+                'razorpay_subscription_id' => $request->subscription_id,
+                'razorpay_signature' => $request->signature
+            ]);
+
+            $sub = Subscription::where(
+                'razorpay_subscription_id',
+                $request->subscription_id
+            )->first();
+
+            if (!$sub) {
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Subscription not found'
+                ], 404);
+            }
+
+            DB::transaction(function () use ($sub, $request) {
+
+                // ✅ Activate subscription
+                $sub->update([
+                    'status' => 'active',
+                    'razorpay_payment_id' => $request->payment_id,
+                    'razorpay_signature' => $request->signature,
+                ]);
+
+                // ✅ Get plan
+                $plan = Plan::where(function ($q) use ($sub) {
+                    $q->where('razorpay_plan_monthly', $sub->plan_id)
+                        ->orWhere('razorpay_plan_yearly', $sub->plan_id);
+                })->first();
+
+                // ✅ Update user plan
+                if ($plan) {
+                    $sub->user->update([
+                        'plan_id' => $plan->id,
+                        'billing_cycle' => $sub->type,
+                    ]);
+                }
+
+                // 🔥🔥 CREATE INVOICE (MAIN ADDITION)
+                if ($plan) {
+                    \App\Models\Invoice::create([
+                        'user_id' => $sub->user_id,
+                        'plan_id' => $plan->id,
+                        'invoice_number' => 'INV-' . strtoupper(\Illuminate\Support\Str::random(8)),
+                        'amount' => $sub->type === 'yearly'
+                            ? $plan->yearly_price
+                            : $plan->monthly_price,
+                        'currency' => 'INR',
+                        'status' => 'paid',
+                        'razorpay_payment_id' => $request->payment_id,
+                        'paid_at' => now(),
+                    ]);
+                }
+
+                // ✅ Clear session
+                session()->forget(['selected_plan', 'selected_billing']);
+            });
+
+            return response()->json(['status' => 'success']);
+        } catch (\Exception $e) {
+
+            Log::error('Verification Failed', [
+                'message' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'status' => 'failed',
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CANCEL SUBSCRIPTION
     |--------------------------------------------------------------------------
     */
     public function cancel(Request $request)
     {
-        $subscription = $request->user()->subscription('default');
+        $sub = Subscription::where('user_id', Auth::id())
+            ->latest()
+            ->first();
 
-        if ($subscription && !$subscription->ended()) {
-            $subscription->cancel();
+        if (!$sub) {
+            return back()->with('error', 'No subscription found.');
         }
 
-        return back()->with(
-            'success',
-            'Subscription cancelled. Access remains until billing period ends.'
+        // 🔥 FREE PLAN
+        $freePlan = Plan::where('is_free', true)->first();
+
+        if (in_array($sub->status, ['cancelled', 'completed'])) {
+
+            if ($freePlan) {
+                $sub->user->update([
+                    'plan_id' => $freePlan->id,
+                    'billing_cycle' => null,
+                ]);
+            }
+
+            return back()->with('error', 'Subscription already ended.');
+        }
+
+        if ($sub->status !== 'active') {
+            return back()->with('error', 'Subscription is not active.');
+        }
+
+        try {
+
+            $razorSub = $this->api->subscription->fetch(
+                $sub->razorpay_subscription_id
+            );
+
+            if ($razorSub->status === 'completed') {
+
+                $sub->update([
+                    'status' => 'completed',
+                    'ends_at' => now()
+                ]);
+
+                if ($freePlan) {
+                    $sub->user->update([
+                        'plan_id' => $freePlan->id,
+                        'billing_cycle' => null,
+                    ]);
+                }
+
+                return back()->with('error', 'Subscription already completed.');
+            }
+
+            // ✅ cancel
+            $razorSub->cancel();
+
+            $sub->update([
+                'status' => 'cancelled',
+                'ends_at' => now()
+            ]);
+
+            // 🔥 DOWNGRADE
+            if ($freePlan) {
+                $sub->user->update([
+                    'plan_id' => $freePlan->id,
+                    'billing_cycle' => null,
+                ]);
+            }
+
+            return back()->with('success', 'Subscription cancelled.');
+        } catch (\Exception $e) {
+
+            Log::error('Cancel Failed', [
+                'message' => $e->getMessage()
+            ]);
+
+            return back()->with('error', 'Cancel failed.');
+        }
+    }
+
+
+    public function webhook(Request $request)
+    {
+        try {
+
+            $payload = $request->all();
+            $event = $payload['event'] ?? null;
+
+            Log::info('Razorpay Webhook Received', ['event' => $event]);
+
+            /*
+        |--------------------------------------------------------------------------
+        | ✅ PAYMENT SUCCESS
+        |--------------------------------------------------------------------------
+        */
+            if ($event === 'invoice.paid') {
+
+                $subscriptionId = $payload['payload']['subscription']['entity']['id'] ?? null;
+                $paymentId = $payload['payload']['payment']['entity']['id'] ?? null;
+
+                if (!$subscriptionId) {
+                    Log::error('Webhook: Missing subscription ID');
+                    return response()->json(['status' => 'error'], 400);
+                }
+
+                $sub = Subscription::where('razorpay_subscription_id', $subscriptionId)->first();
+
+                if (!$sub) {
+                    Log::error('Webhook: Subscription not found', ['id' => $subscriptionId]);
+                    return response()->json(['status' => 'error'], 404);
+                }
+
+                // ✅ Activate
+                $sub->update(['status' => 'active']);
+
+                // ✅ Get plan (FIXED)
+                $plan = Plan::where(function ($q) use ($sub) {
+                    $q->where('razorpay_plan_monthly', $sub->plan_id)
+                        ->orWhere('razorpay_plan_yearly', $sub->plan_id);
+                })->first();
+
+                if (!$plan) {
+                    Log::error('Webhook: Plan not found', ['plan_id' => $sub->plan_id]);
+                    return response()->json(['status' => 'error'], 404);
+                }
+
+                // ✅ Amount (FIXED)
+                $amount = $sub->type === 'yearly'
+                    ? $plan->yearly_price
+                    : $plan->monthly_price;
+
+                // ✅ Prevent duplicate invoice
+                if ($paymentId && !Invoice::where('razorpay_payment_id', $paymentId)->exists()) {
+
+                    Invoice::create([
+                        'user_id' => $sub->user_id,
+                        'plan_id' => $plan->id, // ✅ FIXED
+                        'invoice_number' => 'INV-' . strtoupper(Str::random(8)),
+                        'amount' => $amount, // ✅ FIXED
+                        'currency' => 'INR',
+                        'status' => 'paid',
+                        'razorpay_payment_id' => $paymentId,
+                        'paid_at' => now(),
+                    ]);
+                }
+            }
+
+            /*
+        |--------------------------------------------------------------------------
+        | ❌ PAYMENT FAILED
+        |--------------------------------------------------------------------------
+        */
+            if ($event === 'invoice.payment_failed') {
+
+                $subscriptionId = $payload['payload']['subscription']['entity']['id'] ?? null;
+
+                $sub = Subscription::where('razorpay_subscription_id', $subscriptionId)->first();
+
+                if ($sub) {
+                    $sub->update(['status' => 'failed']);
+                }
+            }
+
+            return response()->json(['status' => 'ok']);
+        } catch (\Exception $e) {
+
+            Log::error('Webhook Exception', [
+                'message' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function download($id)
+    {
+        $invoice = Invoice::with(['user', 'plan'])->findOrFail($id);
+        $userCompany = CompanySetting::where('owner_id', $invoice->user_id)->first();
+        $saas = config('company');
+
+        // Logic: 18% GST Breakdown
+        $total = (float) $invoice->amount;
+        $subtotal = $total / 1.18;
+        $taxAmount = $total - $subtotal;
+
+        $data = [
+            'invoice'       => $invoice,
+            'saas'          => $saas,
+            'userCompany'   => $userCompany,
+            'subtotal'      => $subtotal,
+            'cgst'          => $taxAmount / 2,
+            'sgst'          => $taxAmount / 2,
+            'total'         => $total,
+            'amountInWords' => $this->numToWords($total) . " Rupees Only",
+        ];
+
+        $pdf = Pdf::loadView('pdf.invoice', $data)->setPaper('a4', 'portrait');
+        return $pdf->download("FileCollect_INV_{$invoice->invoice_number}.pdf");
+    }
+
+    // Pro Indian Number to Words Helper
+    private function numToWords($number)
+    {
+        $no = floor($number);
+        $point = round($number - $no, 2) * 100;
+        $hundred = null;
+        $digits_1 = strlen($no);
+        $i = 0;
+        $str = array();
+        $words = array(
+            '0' => '',
+            '1' => 'one',
+            '2' => 'two',
+            '3' => 'three',
+            '4' => 'four',
+            '5' => 'five',
+            '6' => 'six',
+            '7' => 'seven',
+            '8' => 'eight',
+            '9' => 'nine',
+            '10' => 'ten',
+            '11' => 'eleven',
+            '12' => 'twelve',
+            '13' => 'thirteen',
+            '14' => 'fourteen',
+            '15' => 'fifteen',
+            '16' => 'sixteen',
+            '17' => 'seventeen',
+            '18' => 'eighteen',
+            '19' => 'nineteen',
+            '20' => 'twenty',
+            '30' => 'thirty',
+            '40' => 'forty',
+            '50' => 'fifty',
+            '60' => 'sixty',
+            '70' => 'seventy',
+            '80' => 'eighty',
+            '90' => 'ninety'
         );
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Resume Subscription
-    |--------------------------------------------------------------------------
-    */
-    public function resume(Request $request)
-    {
-        $subscription = $request->user()->subscription('default');
-
-        if ($subscription && $subscription->onGracePeriod()) {
-            $subscription->resume();
+        $digits = array('', 'hundred', 'thousand', 'lakh', 'crore');
+        while ($i < $digits_1) {
+            $divider = ($i == 2) ? 10 : 100;
+            $number = floor($no % $divider);
+            $no = floor($no / $divider);
+            $i += ($divider == 10) ? 1 : 2;
+            if ($number) {
+                $plural = (($counter = count($str)) && $number > 9) ? 's' : null;
+                $hundred = ($counter == 1 && $str[0]) ? ' and ' : null;
+                $str[] = ($number < 21) ? $words[$number] . " " . $digits[$counter] . $plural . " " . $hundred
+                    : $words[floor($number / 10) * 10] . " " . $words[$number % 10] . " " . $digits[$counter] . $plural . " " . $hundred;
+            } else $str[] = null;
         }
-
-        return back()->with('success', 'Subscription resumed successfully.');
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Stripe Billing Portal
-    |--------------------------------------------------------------------------
-    */
-    public function portal(Request $request)
-    {
-        return $request->user()
-            ->redirectToBillingPortal(route('dashboard'));
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Download Invoice
-    |--------------------------------------------------------------------------
-    */
-    public function downloadInvoice(Request $request, $invoiceId)
-    {
-        return $request->user()->downloadInvoice($invoiceId, [
-            'vendor'  => config('app.name'),
-            'product' => 'Subscription Service',
-        ]);
-    }
-
-    public function showInvoice(Request $request, $invoiceId)
-    {
-        $invoice = $request->user()->findInvoice($invoiceId);
-
-        abort_if(!$invoice, 404);
-
-        return view('subscriptions.invoice-view', compact('invoice'));
-    }
-
-
-
-    /*
-|--------------------------------------------------------------------------
-| Validate Downgrade Limits
-|--------------------------------------------------------------------------
-*/
-    private function validateDowngradeLimits($user, Plan $newPlan)
-    {
-        $owner = $user->getAccountOwner();
-
-        // 1️⃣ STORAGE CHECK
-        $currentStorage = DocumentUpload::where('owner_id', $owner->id)
-            ->sum('file_size');
-
-        $newStorageLimit = $newPlan->storageBytes(); // in bytes
-
-        if ($newStorageLimit !== null && $currentStorage > $newStorageLimit) {
-            return 'Your current storage usage exceeds the new plan limit.';
-        }
-
-        // 2️⃣ COMPANY USERS CHECK
-        $currentUsers = User::where(function ($q) use ($owner) {
-            $q->where('id', $owner->id)
-                ->orWhere('created_by', $owner->id);
-        })->count();
-
-        if (
-            !$newPlan->hasUnlimited('company_users') &&
-            $currentUsers > $newPlan->company_users
-        ) {
-            return 'You have more team members than allowed in this plan.';
-        }
-
-        // 3️⃣ CLIENT COUNT CHECK
-        $currentClients = Client::where('owner_id', $owner->id)
-            ->where('status', 'active')
-            ->count();
-
-        if (
-            !$newPlan->hasUnlimited('clients') &&
-            $currentClients > $newPlan->clients
-        ) {
-            return 'You have more active clients than allowed in this plan.';
-        }
-
-        // 4️⃣ MONTHLY DOCUMENT LIMIT CHECK
-        $currentMonthlyDocs = DocumentRequest::where('owner_id', $owner->id)
-            ->whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
-            ->count();
-
-        if (
-            !$newPlan->hasUnlimited('document_requests') &&
-            $currentMonthlyDocs > $newPlan->document_requests
-        ) {
-            return 'Your monthly document usage exceeds this plan limit.';
-        }
-
-        return null; // No issues
-    }
-
-
-    public function setDefaultPaymentMethod(Request $request)
-    {
-        $user = $request->user();
-
-        $user->updateDefaultPaymentMethod($request->payment_method);
-
-        return back()->with('success', 'Default payment method updated.');
-    }
-
-    public function removePaymentMethod(Request $request)
-    {
-        $user = $request->user();
-
-        $paymentMethod = $user->findPaymentMethod($request->payment_method);
-
-        if ($paymentMethod) {
-            $paymentMethod->delete();
-        }
-
-        return back()->with('success', 'Payment method removed.');
+        $result = implode('', array_reverse($str));
+        return ucfirst($result);
     }
 }

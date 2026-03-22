@@ -5,14 +5,10 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use App\Models\Subscription;
 
 class EnsureUserSubscribed
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
@@ -21,33 +17,33 @@ class EnsureUserSubscribed
             return redirect()->route('login');
         }
 
-        $subscription = $user->subscription('default');
+        $owner = $user->getAccountOwner();
 
-        // ✅ Free users allowed
+        // ✅ Check active subscription
+        $subscription = Subscription::where('user_id', $owner->id)
+            ->where('status', 'active')
+            ->latest()
+            ->first();
+
+        // ✅ If NO subscription → allow FREE plan
         if (!$subscription) {
             return $next($request);
         }
 
-        // ❌ Block incomplete payments
-        if ($subscription->stripe_status === 'incomplete') {
-            return redirect()->route('subscriptions.index')
-                ->with('error', 'Please complete your payment.');
-        }
-
-        // ❌ Block past_due
-        if ($subscription->stripe_status === 'past_due') {
-            return redirect()->route('subscriptions.index')
-                ->with('error', 'Payment required.');
-        }
-
-        // ❌ Block canceled & ended
-        if ($subscription->ended()) {
+        // ❌ Expired
+        if ($subscription->ends_at && now()->greaterThan($subscription->ends_at)) {
             return redirect()->route('pricing')
-                ->with('error', 'Subscription expired.');
+                ->with('error', 'Your subscription has expired.');
         }
 
-        // ✅ Only allow ACTIVE
-        if ($subscription->stripe_status !== 'active') {
+        // ❌ Cancelled
+        if ($subscription->status === 'cancelled') {
+            return redirect()->route('pricing')
+                ->with('error', 'Subscription cancelled.');
+        }
+
+        // ❌ Not active
+        if ($subscription->status !== 'active') {
             return redirect()->route('subscriptions.index')
                 ->with('error', 'Subscription not active.');
         }

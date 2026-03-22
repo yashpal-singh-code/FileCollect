@@ -33,10 +33,38 @@ class CreateNewUser implements CreatesNewUsers
 
         $cleanPhone = preg_replace('/[^0-9+]/', '', $input['phone']);
 
-        $freePlan = Plan::active()
-            ->where('slug', 'free')
-            ->firstOrFail();
+        /*
+    |--------------------------------------------------------------------------
+    | GET PLAN FROM SESSION (IMPORTANT)
+    |--------------------------------------------------------------------------
+    */
+        $selectedPlanSlug = session('selected_plan');
+        $selectedBilling  = session('selected_billing') ?? 'monthly';
 
+        if ($selectedPlanSlug) {
+            $plan = Plan::active()
+                ->where('slug', $selectedPlanSlug)
+                ->first();
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | FALLBACK TO FREE PLAN
+    |--------------------------------------------------------------------------
+    */
+        if (!isset($plan) || !$plan) {
+            $plan = Plan::active()
+                ->where('slug', 'free')
+                ->firstOrFail();
+
+            $selectedBilling = 'monthly';
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | CREATE USER
+    |--------------------------------------------------------------------------
+    */
         $user = User::create([
             'uuid' => Str::uuid(),
             'first_name' => trim($input['first_name']),
@@ -44,8 +72,8 @@ class CreateNewUser implements CreatesNewUsers
             'phone' => $cleanPhone,
             'email' => strtolower($input['email']),
             'password' => Hash::make($input['password']),
-            'plan_id' => $freePlan->id,
-            'billing_cycle' => 'monthly',
+            'plan_id' => $plan->id,
+            'billing_cycle' => $selectedBilling,
             'is_owner' => true,
             'is_active' => true,
             'terms_accepted_at' => now(),

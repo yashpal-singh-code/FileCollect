@@ -15,50 +15,49 @@ return new class extends Migration
 
             $table->id();
 
-            // Basic Info
+            // 🔹 Basic Info
             $table->string('name', 150);
             $table->string('slug', 100)->unique();
 
-            // Pricing
+            // 💰 Pricing
             $table->decimal('monthly_price', 10, 2)->unsigned()->nullable();
             $table->decimal('yearly_price', 10, 2)->unsigned()->nullable();
-            $table->enum('currency', ['USD'])->default('USD');
+            $table->enum('currency', ['INR', 'USD'])->default('INR');
             $table->boolean('is_free')->default(false);
 
-            // Plan State
+            // ⭐ Plan State
             $table->boolean('is_popular')->default(false);
             $table->boolean('is_active')->default(true)->index();
             $table->unsignedInteger('sort_order')->default(0)->index();
 
-            // Stripe
-            $table->string('stripe_product_id')->nullable();
-            $table->string('stripe_price_monthly')->nullable();
-            $table->string('stripe_price_yearly')->nullable();
+            // 🔐 Razorpay Integration
+            $table->string('razorpay_plan_monthly')->nullable();
+            $table->string('razorpay_plan_yearly')->nullable();
 
-            $table->index('stripe_product_id');
-            $table->index('stripe_price_monthly');
-            $table->index('stripe_price_yearly');
+            $table->index('razorpay_plan_monthly');
+            $table->index('razorpay_plan_yearly');
 
-            // Core Limits
+            // 👥 Core Limits
             $table->unsignedInteger('company_users')->nullable();
             $table->unsignedInteger('clients')->nullable();
             $table->unsignedInteger('document_requests')->nullable();
             $table->unsignedInteger('template_limit')->nullable();
             $table->unsignedInteger('request_templates')->nullable();
 
-            // Storage
+            // 💾 Storage
             $table->unsignedInteger('storage_mb')->default(100);
             $table->unsignedInteger('file_size_limit_mb')->default(10);
 
+            // 🔁 Usage Reset
             $table->enum('usage_reset_type', ['monthly', 'none'])->default('monthly');
 
-            // Allowed MIME types
+            // 📂 Allowed MIME types
             $table->json('allowed_mime_types')->nullable();
 
-            // Upload Features
+            // 📦 Upload Features
             $table->boolean('allow_zip')->default(false);
 
-            // Feature Flags
+            // 🚀 Feature Flags
             $table->boolean('client_portal')->default(false);
             $table->boolean('mfa_authentication')->default(false);
             $table->boolean('download_zip')->default(false);
@@ -69,6 +68,7 @@ return new class extends Migration
 
             $table->timestamps();
 
+            // ⚡ Performance Index
             $table->index(['is_active', 'sort_order']);
         });
     }

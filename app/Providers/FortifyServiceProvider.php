@@ -19,27 +19,22 @@ use Laravel\Fortify\Contracts\LoginResponse;
 
 class FortifyServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         //
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
 
-        // Custom Redirect Logic after Login
+        /*
+        |--------------------------------------------------------------------------
+        | Views
+        |--------------------------------------------------------------------------
+        */
+
         Fortify::loginView(function () {
             return view('auth.login');
-        });
-
-        Fortify::registerView(function () {
-            return view('auth.register');
         });
 
         Fortify::requestPasswordResetLinkView(function () {
@@ -47,9 +42,7 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         Fortify::resetPasswordView(function ($request) {
-            return view('auth.reset-password', [
-                'request' => $request
-            ]);
+            return view('auth.reset-password', ['request' => $request]);
         });
 
         Fortify::confirmPasswordView(function () {
@@ -64,24 +57,25 @@ class FortifyServiceProvider extends ServiceProvider
             return view('auth.two-factor-challenge');
         });
 
+        /*
+        |--------------------------------------------------------------------------
+        | REGISTER VIEW (PLAN + BILLING SESSION)
+        |--------------------------------------------------------------------------
+        */
 
-        // Custom Registration View with Plan Selection
         Fortify::registerView(function (Request $request) {
 
             $planSlug = $request->query('plan', 'free');
             $billing  = $request->query('billing', 'monthly');
 
-            // Validate billing strictly
             if (!in_array($billing, ['monthly', 'yearly'])) {
                 $billing = 'monthly';
             }
 
-            // Fetch only ACTIVE plan
             $plan = Plan::active()
                 ->where('slug', $planSlug)
                 ->first();
 
-            // If invalid plan → fallback to free
             if (!$plan) {
                 $plan = Plan::active()
                     ->where('slug', 'free')
@@ -91,12 +85,11 @@ class FortifyServiceProvider extends ServiceProvider
                 $billing  = 'monthly';
             }
 
-            // Prevent yearly abuse if not available
             if ($billing === 'yearly' && is_null($plan->yearly_price)) {
                 $billing = 'monthly';
             }
 
-            // 🔐 Only now store validated values in session
+            // ✅ STORE SESSION (CRITICAL)
             session([
                 'selected_plan' => $planSlug,
                 'selected_billing' => $billing,
@@ -118,23 +111,20 @@ class FortifyServiceProvider extends ServiceProvider
             ));
         });
 
-
-        // Custom Redirect Logic after Registration
+        /*
+        |--------------------------------------------------------------------------
+        | REGISTER REDIRECT (FIXED)
+        |--------------------------------------------------------------------------
+        */
 
         $this->app->singleton(RegisterResponse::class, function () {
             return new class implements RegisterResponse {
                 public function toResponse($request)
                 {
-                    $plan = session('selected_plan', 'free');
-                    $billing = session('selected_billing', 'monthly');
+                    // ✅ DO NOT clear session here
 
-                    session()->forget(['selected_plan', 'selected_billing']);
-
-                    if ($plan !== 'free') {
-                        return redirect()->route('subscriptions.checkout', [
-                            'plan' => $plan,
-                            'billing' => $billing,
-                        ]);
+                    if (session('selected_plan')) {
+                        return redirect()->route('process.plan');
                     }
 
                     return redirect()->route('dashboard');
@@ -142,7 +132,11 @@ class FortifyServiceProvider extends ServiceProvider
             };
         });
 
-
+        /*
+        |--------------------------------------------------------------------------
+        | LOGIN REDIRECT (FIXED)
+        |--------------------------------------------------------------------------
+        */
 
         $this->app->singleton(LoginResponse::class, function () {
             return new class implements LoginResponse {
@@ -150,6 +144,11 @@ class FortifyServiceProvider extends ServiceProvider
                 public function toResponse($request)
                 {
                     $user = $request->user();
+
+                    // ✅ Continue billing flow if exists
+                    if (session('selected_plan')) {
+                        return redirect()->route('process.plan');
+                    }
 
                     if ($user->hasRole('owner') && $user->saas_owner) {
                         return redirect()->route('owner.dashboard');
@@ -160,16 +159,28 @@ class FortifyServiceProvider extends ServiceProvider
             };
         });
 
+        /*
+        |--------------------------------------------------------------------------
+        | Fortify Actions
+        |--------------------------------------------------------------------------
+        */
 
-        // Fortify Actions
         Fortify::createUsersUsing(CreateNewUser::class);
         Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);
         Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
         Fortify::redirectUserForTwoFactorAuthenticationUsing(RedirectIfTwoFactorAuthenticatable::class);
 
+        /*
+        |--------------------------------------------------------------------------
+        | Rate Limiting
+        |--------------------------------------------------------------------------
+        */
+
         RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())) . '|' . $request->ip());
+            $throttleKey = Str::transliterate(
+                Str::lower($request->input(Fortify::username())) . '|' . $request->ip()
+            );
 
             return Limit::perMinute(5)->by($throttleKey);
         });

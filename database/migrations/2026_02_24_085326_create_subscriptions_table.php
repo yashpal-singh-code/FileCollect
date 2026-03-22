@@ -14,16 +14,23 @@ return new class extends Migration
         Schema::create('subscriptions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id');
-            $table->string('type');
-            $table->string('stripe_id')->unique();
-            $table->string('stripe_status');
-            $table->string('stripe_price')->nullable();
+
+            $table->string('type'); // keep (monthly/yearly)
+
+            $table->string('razorpay_subscription_id')->unique();
+            $table->string('status'); // active, created, cancelled
+            $table->string('plan_id')->nullable();
+
+            $table->string('razorpay_payment_id')->nullable();
+            $table->string('razorpay_signature')->nullable();
+
             $table->integer('quantity')->nullable();
             $table->timestamp('trial_ends_at')->nullable();
             $table->timestamp('ends_at')->nullable();
+
             $table->timestamps();
 
-            $table->index(['user_id', 'stripe_status']);
+            $table->index(['user_id', 'status']);
         });
     }
 

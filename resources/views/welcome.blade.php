@@ -456,7 +456,7 @@
 
     </section>
 
-    <section id="pricing" class="py-24 bg-slate-50" x-data="{ billing: 'monthly' }">
+    <section id="pricing" class="py-24 bg-slate-50" x-data="{ billing: 'monthly', loading: false }">
 
         <div class="max-w-7xl mx-auto px-6">
 
@@ -465,11 +465,8 @@
                 <p class="text-slate-600">Start for free, upgrade as you grow.</p>
             </div>
 
-
             <!-- Billing Toggle -->
-
             <div class="flex justify-center mb-16">
-
                 <div class="bg-white border border-slate-200 rounded-full p-1 flex shadow-sm items-center">
 
                     <button type="button" @click="billing = 'monthly'"
@@ -483,7 +480,6 @@
                         class="px-6 py-2 rounded-full text-sm font-medium transition flex items-center gap-2 cursor-pointer">
 
                         Yearly
-
                         <span class="bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full">
                             Save 30%
                         </span>
@@ -491,16 +487,14 @@
                     </button>
 
                 </div>
-
             </div>
-
 
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
 
                 @foreach ($plans as $plan)
                     <div
                         class="bg-white p-10 rounded-3xl shadow-sm border flex flex-col
-                              not-odd:{{ $plan->is_popular ? 'border-blue-600 shadow-2xl scale-105 relative z-10' : 'border-slate-200' }}">
+                    {{ $plan->is_popular ? 'border-blue-600 shadow-2xl scale-105 relative z-10' : 'border-slate-200' }}">
 
                         @if ($plan->is_popular)
                             <div
@@ -509,16 +503,12 @@
                             </div>
                         @endif
 
-
                         <!-- Plan Name -->
-
                         <h3 class="text-xl font-bold mb-2 {{ $plan->is_popular ? 'text-blue-600' : '' }}">
                             {{ $plan->name }}
                         </h3>
 
-
                         <!-- Price -->
-
                         <div class="mb-8">
 
                             @if ($plan->is_free)
@@ -531,8 +521,8 @@
 
                                     <span class="text-4xl font-extrabold"
                                         x-text="billing === 'monthly'
-                ? '${{ number_format($plan->monthly_price, 0) }}'
-                : '${{ number_format($plan->yearly_price, 0) }}'">
+                                        ? '${{ number_format($plan->monthly_price, 0) }}'
+                                        : '{{ $plan->yearly_price ? '$' . number_format($plan->yearly_price, 0) : 'N/A' }}'">
                                     </span>
 
                                     <span class="text-slate-500 ml-2"
@@ -541,22 +531,15 @@
 
                                 </div>
 
-                                <!-- yearly offer -->
-
                                 <div x-show="billing === 'yearly'" class="text-xs text-green-600 font-medium mt-1">
-
                                     Save 30% with yearly billing
-
                                 </div>
                             @endif
 
                         </div>
 
-
                         <!-- Limits -->
-
                         <ul class="space-y-3 text-sm mb-6">
-
                             <li class="flex items-center gap-2">
                                 <x-lucide-users class="w-4 h-4 text-slate-500" />
                                 {{ $plan->company_users }} Company Users
@@ -576,148 +559,42 @@
                                 <x-lucide-layout-template class="w-4 h-4 text-slate-500" />
                                 {{ $plan->template_limit }} Templates
                             </li>
-
-                            <li class="flex items-center gap-2">
-                                <x-lucide-database class="w-4 h-4 text-slate-500" />
-                                {{ $plan->storage_mb >= 1024 ? $plan->storage_mb / 1024 . ' GB' : $plan->storage_mb . ' MB' }}
-                                Storage
-                            </li>
-
-                            <li class="flex items-center gap-2">
-                                <x-lucide-upload class="w-4 h-4 text-slate-500" />
-                                Max File Size
-                                {{ $plan->file_size_limit_mb >= 1024 ? $plan->file_size_limit_mb / 1024 . ' GB' : $plan->file_size_limit_mb . ' MB' }}
-                            </li>
-
-                            @if ($plan->whatsapp_limit)
-                                <li class="flex items-center gap-2">
-                                    <x-lucide-message-circle class="w-4 h-4 text-slate-500" />
-                                    {{ $plan->whatsapp_limit }} WhatsApp Messages
-                                </li>
-                            @endif
-
                         </ul>
 
+                        <!-- CTA BUTTON -->
+                        <button type="button"
+                            @click="
+                            if (loading) return;
+                            loading = true;
+                            window.location.href = '/select-plan?plan={{ $plan->slug }}&billing=' + billing;
+                        "
+                            :disabled="loading"
+                            class="w-full py-4 rounded-xl font-semibold
+                        flex items-center justify-center gap-2
+                        transition-all duration-200 ease-out
+                        focus:outline-none focus:ring-2 focus:ring-blue-500/40
+                        group
+                        disabled:opacity-50 disabled:cursor-not-allowed
 
-                        <!-- Feature Flags -->
+                        {{ $plan->is_popular
+                            ? 'bg-blue-600 text-white shadow-lg hover:bg-blue-700 hover:shadow-xl active:scale-[0.98]'
+                            : 'border-2 border-slate-200 text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98]' }}">
 
-                        <ul class="space-y-3 text-sm mb-10 grow">
+                            <!-- Loader -->
+                            <svg x-show="loading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                    stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                            </svg>
 
-                            @if ($plan->client_portal)
-                                <li class="flex items-center gap-2">
-                                    <x-lucide-check class="w-4 h-4 text-green-500" /> Client Portal
-                                </li>
-                            @endif
+                            <span x-text="loading ? 'Redirecting...' : 'Get {{ $plan->name }}'"></span>
 
-                            @if ($plan->otp_login)
-                                <li class="flex items-center gap-2">
-                                    <x-lucide-check class="w-4 h-4 text-green-500" /> OTP Login
-                                </li>
-                            @endif
+                            <i data-lucide="arrow-right"
+                                class="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1"
+                                x-show="!loading">
+                            </i>
 
-                            @if ($plan->approve_workflow)
-                                <li class="flex items-center gap-2">
-                                    <x-lucide-check class="w-4 h-4 text-green-500" /> Approval Workflow
-                                </li>
-                            @endif
-
-                            @if ($plan->reupload_history)
-                                <li class="flex items-center gap-2">
-                                    <x-lucide-check class="w-4 h-4 text-green-500" /> Reupload History
-                                </li>
-                            @endif
-
-                            @if ($plan->download_zip)
-                                <li class="flex items-center gap-2">
-                                    <x-lucide-check class="w-4 h-4 text-green-500" /> Download ZIP
-                                </li>
-                            @endif
-
-                            @if ($plan->expiry_tracking)
-                                <li class="flex items-center gap-2">
-                                    <x-lucide-check class="w-4 h-4 text-green-500" /> Expiry Tracking
-                                </li>
-                            @endif
-
-                            @if ($plan->renewal_reminder)
-                                <li class="flex items-center gap-2">
-                                    <x-lucide-check class="w-4 h-4 text-green-500" /> Renewal Reminder
-                                </li>
-                            @endif
-
-                            @if ($plan->scheduled_reminder)
-                                <li class="flex items-center gap-2">
-                                    <x-lucide-check class="w-4 h-4 text-green-500" /> Scheduled Reminder
-                                </li>
-                            @endif
-
-                            @if ($plan->escalation_reminder)
-                                <li class="flex items-center gap-2">
-                                    <x-lucide-check class="w-4 h-4 text-green-500" /> Escalation Reminder
-                                </li>
-                            @endif
-
-                            @if ($plan->export_excel)
-                                <li class="flex items-center gap-2">
-                                    <x-lucide-check class="w-4 h-4 text-green-500" /> Export Excel
-                                </li>
-                            @endif
-
-                            @if ($plan->export_pdf)
-                                <li class="flex items-center gap-2">
-                                    <x-lucide-check class="w-4 h-4 text-green-500" /> Export PDF
-                                </li>
-                            @endif
-
-                            @if ($plan->branding)
-                                <li class="flex items-center gap-2">
-                                    <x-lucide-check class="w-4 h-4 text-green-500" /> Branding
-                                </li>
-                            @endif
-
-                            @if ($plan->white_label)
-                                <li class="flex items-center gap-2">
-                                    <x-lucide-check class="w-4 h-4 text-green-500" /> White Label
-                                </li>
-                            @endif
-
-                            @if ($plan->priority_support)
-                                <li class="flex items-center gap-2">
-                                    <x-lucide-check class="w-4 h-4 text-green-500" /> Priority Support
-                                </li>
-                            @endif
-
-                        </ul>
-
-
-                        <!-- Button -->
-                        <form method="POST" action="{{ route('select.plan') }}">
-                            @csrf
-
-                            <input type="hidden" name="plan" value="{{ $plan->slug }}">
-                            <input type="hidden" name="billing_cycle" :value="billing">
-
-                            <button
-                                class="w-full py-4 rounded-xl font-semibold
-               flex items-center justify-center gap-2
-               transition-all duration-200 ease-out
-               cursor-pointer
-               focus:outline-none focus:ring-2 focus:ring-blue-500/40
-               group
-
-               {{ $plan->is_popular
-                   ? 'bg-blue-600 text-white shadow-lg hover:bg-blue-700 hover:shadow-xl active:scale-[0.98]'
-                   : 'border-2 border-slate-200 text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98]' }}">
-
-                                <span>Get {{ $plan->name }}</span>
-
-                                <!-- Lucide Arrow -->
-                                <i data-lucide="arrow-right"
-                                    class="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1">
-                                </i>
-
-                            </button>
-                        </form>
+                        </button>
 
                     </div>
                 @endforeach

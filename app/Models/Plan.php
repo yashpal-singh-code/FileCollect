@@ -8,7 +8,7 @@ class Plan extends Model
 {
     /*
     |--------------------------------------------------------------------------
-    | Mass Assignment Protection
+    | Mass Assignment
     |--------------------------------------------------------------------------
     */
 
@@ -25,6 +25,10 @@ class Plan extends Model
         'is_popular',
         'is_active',
         'sort_order',
+
+        // ✅ Razorpay
+        'razorpay_plan_monthly',
+        'razorpay_plan_yearly',
 
         // Limits
         'company_users',
@@ -60,16 +64,9 @@ class Plan extends Model
         'priority_support',
     ];
 
-    // Stripe IDs protected from mass assignment
-    protected $guarded = [
-        'stripe_product_id',
-        'stripe_price_monthly',
-        'stripe_price_yearly',
-    ];
-
     /*
     |--------------------------------------------------------------------------
-    | Attribute Casting
+    | Casting
     |--------------------------------------------------------------------------
     */
 
@@ -115,7 +112,7 @@ class Plan extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | Boot Defaults & Hardening
+    | Boot
     |--------------------------------------------------------------------------
     */
 
@@ -123,14 +120,11 @@ class Plan extends Model
     {
         static::creating(function ($plan) {
 
-            // Normalize slug
             $plan->slug = strtolower(trim($plan->slug));
 
-            // Safe defaults
             $plan->storage_mb ??= 0;
             $plan->file_size_limit_mb ??= 0;
 
-            // Secure default MIME types (NO wildcard)
             $plan->allowed_mime_types ??= [
                 'application/pdf',
                 'image/jpeg',
@@ -141,7 +135,9 @@ class Plan extends Model
             $plan->is_popular ??= false;
             $plan->is_free ??= false;
 
-            $plan->currency ??= 'USD';
+            // ✅ Default currency INDIA
+            $plan->currency ??= 'INR';
+
             $plan->usage_reset_type ??= 'monthly';
         });
     }
@@ -164,30 +160,20 @@ class Plan extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | Stripe Helpers (Hardened)
+    | Razorpay Helpers
     |--------------------------------------------------------------------------
     */
 
-    public function getStripePrice(string $billing = 'monthly'): string
+    public function getRazorpayPlanId(string $billing = 'monthly'): ?string
     {
-        if (!in_array($billing, ['monthly', 'yearly'])) {
-            abort(400, 'Invalid billing cycle.');
-        }
-
-        $price = $billing === 'yearly'
-            ? $this->stripe_price_yearly
-            : $this->stripe_price_monthly;
-
-        if (!$price) {
-            abort(400, 'Stripe price not configured.');
-        }
-
-        return $price;
+        return $billing === 'yearly'
+            ? $this->razorpay_plan_yearly
+            : $this->razorpay_plan_monthly;
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Plan Type Helpers
+    | Plan Type
     |--------------------------------------------------------------------------
     */
 
@@ -203,7 +189,7 @@ class Plan extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | Feature Helpers
+    | Features
     |--------------------------------------------------------------------------
     */
 
@@ -214,43 +200,7 @@ class Plan extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | Upload Helpers (Secure)
-    |--------------------------------------------------------------------------
-    */
-
-    public function maxUploadBytes(): ?int
-    {
-        if ($this->hasUnlimited('file_size_limit_mb')) {
-            return null;
-        }
-
-        return (int) $this->file_size_limit_mb * 1024 * 1024;
-    }
-
-    public function storageBytes(): ?int
-    {
-        if ($this->hasUnlimited('storage_mb')) {
-            return null;
-        }
-
-        return (int) $this->storage_mb * 1024 * 1024;
-    }
-
-    public function allowedMimeTypes(): array
-    {
-        return $this->allowed_mime_types ?? [];
-    }
-
-    public function isMimeAllowed(string $mime): bool
-    {
-        $allowed = $this->allowedMimeTypes();
-
-        return in_array($mime, $allowed, true);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Limit Helpers
+    | Limits
     |--------------------------------------------------------------------------
     */
 
@@ -270,33 +220,51 @@ class Plan extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | Pricing Helpers
+    | Storage
+    |--------------------------------------------------------------------------
+    */
+
+    public function storageBytes(): ?int
+    {
+        if ($this->hasUnlimited('storage_mb')) {
+            return null;
+        }
+
+        return (int) $this->storage_mb * 1024 * 1024;
+    }
+
+    public function maxUploadBytes(): ?int
+    {
+        if ($this->hasUnlimited('file_size_limit_mb')) {
+            return null;
+        }
+
+        return (int) $this->file_size_limit_mb * 1024 * 1024;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pricing Helper
     |--------------------------------------------------------------------------
     */
 
     public function yearlySavingsPercentage(): ?int
     {
-        if (
-            is_null($this->monthly_price) ||
-            is_null($this->yearly_price) ||
-            (float) $this->monthly_price <= 0
-        ) {
+        if (!$this->monthly_price || !$this->yearly_price) {
             return null;
         }
 
-        $yearlyFromMonthly = (float) $this->monthly_price * 12;
+        $yearlyFromMonthly = $this->monthly_price * 12;
 
         if ($yearlyFromMonthly <= 0) {
             return null;
         }
 
         $percentage = (
-            ($yearlyFromMonthly - (float) $this->yearly_price)
+            ($yearlyFromMonthly - $this->yearly_price)
             / $yearlyFromMonthly
         ) * 100;
 
-        return $percentage > 0
-            ? (int) round($percentage)
-            : null;
+        return $percentage > 0 ? (int) round($percentage) : null;
     }
 }

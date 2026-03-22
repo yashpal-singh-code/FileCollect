@@ -25,66 +25,49 @@ class HomeController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | Select Plan (Hardened)
+    | Select Plan (UPDATED FLOW 🚀)
     |--------------------------------------------------------------------------
     */
     public function select(Request $request)
     {
-        // Strict validation (no exists rule)
         $validated = $request->validate([
             'plan' => ['required', 'string'],
-            'billing_cycle' => ['required', 'in:monthly,yearly'],
+            'billing' => ['required', 'in:monthly,yearly'],
         ]);
 
-        // Fetch ONLY active plan
+        // ✅ Get plan
         $plan = Plan::active()
             ->where('slug', $validated['plan'])
             ->firstOrFail();
 
-        $billing = $validated['billing_cycle'];
+        $billing = $validated['billing'];
 
         /*
         |--------------------------------------------------------------------------
-        | Prevent Yearly Billing Abuse
+        | Validate Yearly Support
         |--------------------------------------------------------------------------
         */
         if ($billing === 'yearly' && is_null($plan->yearly_price)) {
-            abort(400, 'Yearly billing not available for this plan.');
+            abort(400, 'Yearly billing not available.');
         }
 
         /*
         |--------------------------------------------------------------------------
-        | FREE PLAN → Never Go To Checkout
+        | Store in Session (CRITICAL)
         |--------------------------------------------------------------------------
         */
-        if ($plan->isFree()) {
-
-            if (!Auth::check()) {
-                return redirect()->route('register', [
-                    'plan' => $plan->slug,
-                ]);
-            }
-
-            // Logged in user selecting free plan
-            // You should activate free subscription internally (not Stripe)
-            return redirect()->route('dashboard');
-        }
+        session([
+            'selected_plan' => $plan->slug,
+            'selected_billing' => $billing,
+        ]);
 
         /*
         |--------------------------------------------------------------------------
-        | PAID PLAN SECURITY CHECK
-        |--------------------------------------------------------------------------
-        */
-        // Ensure Stripe price exists before redirecting
-        $plan->getStripePrice($billing);
-        // (this will abort if invalid or not configured)
-
-        /*
-        |--------------------------------------------------------------------------
-        | NOT LOGGED IN → REGISTER FLOW
+        | NOT LOGGED IN → REGISTER (FIXED)
         |--------------------------------------------------------------------------
         */
         if (!Auth::check()) {
+
             return redirect()->route('register', [
                 'plan' => $plan->slug,
                 'billing' => $billing,
@@ -93,12 +76,9 @@ class HomeController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | LOGGED IN → CHECKOUT
+        | LOGGED IN → PROCESS PLAN
         |--------------------------------------------------------------------------
         */
-        return redirect()->route('subscriptions.checkout', [
-            'plan' => $plan->slug,
-            'billing' => $billing,
-        ]);
+        return redirect()->route('process.plan');
     }
 }

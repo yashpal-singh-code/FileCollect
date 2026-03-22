@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Cashier\Billable;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\File;
@@ -14,7 +13,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable, Billable, HasRoles, SoftDeletes, TwoFactorAuthenticatable;
+    use HasFactory, Notifiable, HasRoles, SoftDeletes, TwoFactorAuthenticatable;
 
     /*
     |--------------------------------------------------------------------------
@@ -124,25 +123,20 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $owner = $this->getAccountOwner();
 
-        $subscription = $owner->subscription('default');
+        $subscription = Subscription::where('user_id', $owner->id)
+            ->where('status', 'active')
+            ->latest()
+            ->first();
 
-        // Must exist AND be active
-        if ($subscription && $subscription->active()) {
+        if ($subscription) {
 
-            $subscription->loadMissing('items');
-
-            if ($subscription->items->isNotEmpty()) {
-
-                $stripePriceId = $subscription->items->first()->stripe_price;
-
-                return Plan::where(function ($query) use ($stripePriceId) {
-                    $query->where('stripe_price_monthly', $stripePriceId)
-                        ->orWhere('stripe_price_yearly', $stripePriceId);
-                })->first();
-            }
+            return Plan::where(function ($query) use ($subscription) {
+                $query->where('razorpay_plan_monthly', $subscription->plan_id)
+                    ->orWhere('razorpay_plan_yearly', $subscription->plan_id);
+            })->first();
         }
 
-        // Fallback to Free plan
+        // Fallback → Free Plan
         return Plan::where('is_free', true)->first();
     }
 
@@ -278,6 +272,18 @@ class User extends Authenticatable implements MustVerifyEmail
     | Accessors
     |--------------------------------------------------------------------------
     */
+
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    public function activeSubscription()
+    {
+        return $this->hasOne(Subscription::class)
+            ->where('status', 'active')
+            ->latest();
+    }
 
     public function plan()
     {
