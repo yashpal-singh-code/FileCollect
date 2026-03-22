@@ -1,42 +1,24 @@
-# Laravel core
-/vendor
-/node_modules
-/public/storage
-/storage/*.key
-/storage/pail
-/bootstrap/cache/*.php
-
-# Environment
+*.log
+.DS_Store
 .env
 .env.backup
 .env.production
-auth.json
-
-# Logs
-*.log
-
-# Build files
+.phpactor.json
+.phpunit.result.cache
+/.fleet
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+/auth.json
+/node_modules
 /public/build
 /public/hot
-
-# IDE / Editor
-/.idea
-/.vscode
-/.fleet
-/.zed
-.phpactor.json
-
-# PHPUnit
-.phpunit.result.cache
-/.phpunit.cache
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Laravel Forge / Vapor / Nova (optional)
-.nova
-
-# Homestead
+/public/storage
+/storage/*.key
+/storage/pail
+/vendor
 Homestead.json
 Homestead.yaml
+Thumbs.db
