@@ -521,7 +521,7 @@
 
                                     <span class="text-4xl font-extrabold"
                                         x-text="billing === 'monthly'
-                                        ? '${{ number_format($plan->monthly_price, 0) }}'
+                                        ? '₹{{ number_format($plan->monthly_price, 0) }}'
                                         : '{{ $plan->yearly_price ? '₹' . number_format($plan->yearly_price, 0) : 'N/A' }}'">
                                     </span>
 
