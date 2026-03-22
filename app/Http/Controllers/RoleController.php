@@ -15,13 +15,16 @@ class RoleController extends Controller
     */
     public function manage(Request $request)
     {
-        $roles = Role::all();
+        // 🚫 Hide restricted roles
+        $roles = Role::whereNotIn('name', ['owner', 'super_admin'])->get();
+
         $permissions = Permission::all();
 
         $selectedRole = null;
 
         if ($request->filled('role_id')) {
             $selectedRole = Role::with('permissions')
+                ->whereNotIn('name', ['owner', 'super_admin']) // extra safety
                 ->find($request->role_id);
         }
 

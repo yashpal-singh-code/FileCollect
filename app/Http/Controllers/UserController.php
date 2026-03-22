@@ -190,7 +190,7 @@ class UserController extends Controller
 
         $this->authorizeOwnerAccess($user, $owner);
 
-        $roles = Role::whereNotIn('name', ['super_admin'])->get();
+        $roles = Role::whereNotIn('name', ['super_admin', 'owner'])->get();
 
         return view('users.edit', compact('user', 'roles'));
     }
