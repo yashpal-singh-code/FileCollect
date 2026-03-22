@@ -513,7 +513,7 @@
 
                             @if ($plan->is_free)
                                 <div class="flex items-baseline">
-                                    <span class="text-4xl font-extrabold">$0</span>
+                                    <span class="text-4xl font-extrabold">₹0</span>
                                     <span class="text-slate-500 ml-2">Free</span>
                                 </div>
                             @else
@@ -522,7 +522,7 @@
                                     <span class="text-4xl font-extrabold"
                                         x-text="billing === 'monthly'
                                         ? '${{ number_format($plan->monthly_price, 0) }}'
-                                        : '{{ $plan->yearly_price ? '$' . number_format($plan->yearly_price, 0) : 'N/A' }}'">
+                                        : '{{ $plan->yearly_price ? '₹' . number_format($plan->yearly_price, 0) : 'N/A' }}'">
                                     </span>
 
                                     <span class="text-slate-500 ml-2"

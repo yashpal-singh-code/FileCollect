@@ -22,7 +22,7 @@ return new class extends Migration
             // 💰 Pricing
             $table->decimal('monthly_price', 10, 2)->unsigned()->nullable();
             $table->decimal('yearly_price', 10, 2)->unsigned()->nullable();
-            $table->enum('currency', ['INR', 'USD'])->default('INR');
+            $table->string('currency')->default('INR');
             $table->boolean('is_free')->default(false);
 
             // ⭐ Plan State
