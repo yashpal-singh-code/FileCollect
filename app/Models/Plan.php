@@ -127,8 +127,23 @@ class Plan extends Model
 
             $plan->allowed_mime_types ??= [
                 'application/pdf',
+
+                // Images
                 'image/jpeg',
-                'image/png'
+                'image/png',
+                'image/jpg', // sometimes comes as this
+
+                // Zip
+                'application/zip',
+                'application/x-zip-compressed', // Windows ZIP
+
+                // Word
+                'application/msword', // OLD .doc
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+
+                // Excel
+                'application/vnd.ms-excel', // OLD .xls
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
             ];
 
             $plan->is_active ??= true;
@@ -156,6 +171,23 @@ class Plan extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('sort_order');
+    }
+
+
+    /*
+|--------------------------------------------------------------------------
+| Upload / MIME Helpers
+|--------------------------------------------------------------------------
+*/
+
+    public function allowedMimeTypes(): array
+    {
+        return $this->allowed_mime_types ?? [];
+    }
+
+    public function isMimeAllowed(string $mime): bool
+    {
+        return in_array($mime, $this->allowedMimeTypes());
     }
 
     /*

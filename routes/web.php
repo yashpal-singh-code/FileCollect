@@ -112,7 +112,6 @@ Route::get('/portal/{token}', [PortalController::class, 'access'])->middleware('
 Route::post('/portal/{token}/upload', [PortalController::class, 'upload'])->middleware('throttle:portal-uploads')->name('portal.upload');
 Route::get('/client/activate/{token}', [ClientController::class, 'activate'])->name('client.activate');
 
-
 /*
 |--------------------------------------------------------------------------
 | Portal Authentication Routes

@@ -208,8 +208,9 @@ class UserController extends Controller
 
         $this->authorizeOwnerAccess($user, $owner);
 
-        if ($user->is_owner) {
-            return back()->with('error', 'Owner account cannot be modified.');
+        // ✅ Allow owner self-update only
+        if ($user->is_owner && $authUser->id !== $user->id) {
+            return back()->with('error', 'You cannot modify another owner.');
         }
 
         $request->validate([
@@ -223,6 +224,7 @@ class UserController extends Controller
             'is_active'  => 'nullable|boolean',
         ]);
 
+        // Prevent assigning super_admin
         if (!Role::where('name', $request->role)
             ->whereNotIn('name', ['super_admin'])
             ->exists()) {
@@ -244,7 +246,12 @@ class UserController extends Controller
             ]);
         }
 
-        $user->syncRoles([$request->role]);
+        // ✅ Owner role protection
+        if ($user->is_owner) {
+            $user->syncRoles(['owner']);
+        } else {
+            $user->syncRoles([$request->role]);
+        }
 
         return redirect()
             ->route('users.index')

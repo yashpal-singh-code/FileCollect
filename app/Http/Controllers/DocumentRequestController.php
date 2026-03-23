@@ -31,8 +31,7 @@ class DocumentRequestController extends Controller
         $owner = $authUser->getAccountOwner();
         $ownerId = $owner->id;
 
-        // Get search input (trim spaces)
-        $search = trim($request->get('search'));
+        $search = trim((string) $request->query('search', ''));
 
         /*
     |--------------------------------------------------------------------------
@@ -323,7 +322,7 @@ class DocumentRequestController extends Controller
                 'upload_count'      => 0,
                 'total_upload_size' => 0,
                 'message'           => $validated['message'] ?? null,
-                'expires_at' => $validated['expires_at'] ?: now()->addDays(7),
+                'expires_at' => $validated['expires_at'] ?: now()->addDays(15),
                 'status'            => DocumentRequest::STATUS_DRAFT,
                 'last_activity_at'  => $now,
             ]);

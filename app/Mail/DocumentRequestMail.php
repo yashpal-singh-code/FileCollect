@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\DocumentRequest;
 use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailable;
 
 class DocumentRequestMail extends Mailable
@@ -17,32 +18,45 @@ class DocumentRequestMail extends Mailable
         $this->link = $link;
     }
 
-    public function content(): Content
+    /**
+     * ✅ SUBJECT (Laravel 10+ way)
+     */
+    public function envelope(): Envelope
     {
-        // 1) Use the correct relation: requester(), not user()
         $requester = $this->documentRequest->requester;
 
-        // 2) Resolve owner (for multi‑tenant / SaaS logic)
-        // If the requester is the owner, use them; otherwise use their owner
-        $owner = $requester?->is_owner ? $requester : $requester?->owner;
-
-        // 3) Build full name from first_name + last_name (your schema)
         $fullName = trim(
             ($requester?->first_name ?? '') . ' ' .
                 ($requester?->last_name ?? '')
         );
 
-        // 4) Return the view with real tenant data
+        return new Envelope(
+            subject: 'Document Request | '
+                . ($fullName ?: 'User')
+                . ' | '
+                . $this->documentRequest->request_number,
+        );
+    }
+
+    public function content(): Content
+    {
+        $requester = $this->documentRequest->requester;
+
+        $owner = $requester?->is_owner ? $requester : $requester?->owner;
+
+        $fullName = trim(
+            ($requester?->first_name ?? '') . ' ' .
+                ($requester?->last_name ?? '')
+        );
+
         return new Content(
             view: 'emails.document-request',
             with: [
                 'documentRequest' => $this->documentRequest,
                 'link'            => $this->link,
-
-                // Real, tenant-specific values
-                'requesterName'  => $fullName ?: 'User',
-                'requesterEmail' => $requester?->email,
-                'companyName'    => $owner?->companySetting?->company_name,
+                'requesterName'   => $fullName ?: 'User',
+                'requesterEmail'  => $requester?->email,
+                'companyName'     => $owner?->companySetting?->company_name,
             ],
         );
     }

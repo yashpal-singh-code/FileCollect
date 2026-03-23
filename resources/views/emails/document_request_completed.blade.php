@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $companyName }} Document Request</title>
+    <title>Document Request Completed</title>
 </head>
 
 <body style="margin:0;padding:0;background:#f9fafb;font-family:Arial, Helvetica, sans-serif;">
@@ -16,6 +16,8 @@
                 <!-- Main Container -->
                 <table width="600" cellpadding="0" cellspacing="0"
                     style="background:#ffffff;border:1px solid #e5e7eb;">
+
+                    <!-- Header -->
 
                     <!-- Header -->
                     <tr>
@@ -61,96 +63,53 @@
                                     <td>
 
                                         <p style="margin:0 0 16px;color:#374151;font-size:14px;">
-                                            Dear {{ $documentRequest->client?->full_name ?? 'Client' }},
+                                            Hello {{ $recipientName ?? 'User' }},
                                         </p>
 
                                         <p style="margin:0 0 16px;color:#374151;font-size:14px;">
-                                            <strong>{{ $requesterName }}</strong>
-                                            has requested documents from you.
+                                            <strong>{{ $clientName }}</strong> has completed uploading all required
+                                            documents.
                                         </p>
 
-                                        <p style="margin:0 0 24px;color:#374151;font-size:14px;">
-                                            Please upload the requested documents using the secure portal below.
+                                        <!-- Highlight Box -->
+                                        <table width="100%" cellpadding="0" cellspacing="0"
+                                            style="background:#ecfdf5;border:1px solid #d1fae5;margin-bottom:20px;">
+                                            <tr>
+                                                <td style="padding:14px;font-size:13px;color:#065f46;">
+
+                                                    <strong>Completion Details</strong><br><br>
+
+                                                    <strong>Request ID:</strong> {{ $requestNumber }}<br>
+                                                    <strong>Status:</strong> Completed
+
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <p style="margin:0 0 20px;color:#374151;font-size:14px;">
+                                            You can now review all submitted documents using the link below.
                                         </p>
 
                                         <!-- Button -->
                                         <table cellpadding="0" cellspacing="0" style="margin-bottom:30px;">
                                             <tr>
-                                                <td align="center" bgcolor="#3b82f6">
-                                                    <a href="{{ $link }}"
+                                                <td align="center" bgcolor="#2563eb">
+                                                    <a href="{{ $url }}"
                                                         style="display:inline-block;padding:12px 22px;
         font-size:14px;color:#ffffff;text-decoration:none;font-weight:600;">
-                                                        Access Secure Portal
+                                                        View Completed Request
                                                     </a>
                                                 </td>
                                             </tr>
                                         </table>
 
-                                        <!-- Details -->
-                                        <table width="100%" cellpadding="0" cellspacing="0"
-                                            style="margin-bottom:20px;">
-                                            <tr>
-                                                <td style="font-size:13px;color:#6b7280;padding-bottom:8px;">
-                                                    <strong>Request ID:</strong> {{ $documentRequest->request_number }}
-                                                </td>
-                                            </tr>
-
-                                            @if ($documentRequest->expires_at)
-                                                <tr>
-                                                    <td style="font-size:13px;color:#6b7280;">
-                                                        <strong>Expires On:</strong>
-                                                        {{ $documentRequest->expires_at->format('d M Y, h:i A') }}
-                                                    </td>
-                                                </tr>
-                                            @endif
-                                        </table>
-
-                                        <!-- Requested By -->
-                                        <table width="100%" cellpadding="0" cellspacing="0"
-                                            style="margin-bottom:20px;">
-                                            <tr>
-                                                <td style="font-size:13px;color:#6b7280;line-height:1.5;">
-
-                                                    <strong>Requested By:</strong><br>
-
-                                                    <span style="font-size:14px;color:#111827;font-weight:600;">
-                                                        {{ $requesterName }}
-                                                        @if (!empty($companyName))
-                                                            — {{ $companyName }}
-                                                        @endif
-                                                    </span>
-
-                                                </td>
-                                            </tr>
-
-                                            @if (!empty($requesterEmail))
-                                                <tr>
-                                                    <td style="font-size:13px;color:#6b7280;padding-top:4px;">
-                                                        <strong>Contact:</strong>
-                                                        <a href="mailto:{{ $requesterEmail }}"
-                                                            style="color:#2563eb;text-decoration:none;">
-                                                            {{ $requesterEmail }}
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                            @endif
-                                        </table>
-
-                                        <!-- Security -->
-                                        <p style="margin:20px 0;color:#374151;font-size:13px;">
-                                            <strong>Security Notice:</strong><br>
-                                            This link is unique to you and provides secure access to your documents.
-                                            Do not share this link with anyone.
-                                        </p>
-
                                         <!-- Fallback -->
                                         <p style="margin:20px 0;color:#374151;font-size:13px;">
-                                            If the button above does not work, copy and paste this URL into your
-                                            browser:
+                                            If the button above does not work, copy and paste this URL:
                                         </p>
 
                                         <p style="word-break:break-all;color:#2563eb;font-size:13px;">
-                                            {{ $link }}
+                                            {{ $url }}
                                         </p>
 
                                     </td>
@@ -165,12 +124,12 @@
                     <tr>
                         <td align="center" style="padding:20px 0;border-top:1px solid #e5e7eb;">
 
-                            <table width="540" cellpadding="0" cellspacing="0" align="center">
+                            <table width="540" cellpadding="0" cellspacing="0">
                                 <tr>
-                                    <td align="center" style="font-size:12px;color:#6b7280;text-align:center;">
+                                    <td align="center" style="font-size:12px;color:#6b7280;">
 
                                         <p style="margin:0 0 8px;">
-                                            If you were not expecting this request, you may safely ignore this email.
+                                            This is an automated notification from FileCollect.
                                         </p>
 
                                         <p style="margin:0;">

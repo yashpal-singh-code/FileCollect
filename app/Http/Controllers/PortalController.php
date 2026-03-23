@@ -11,7 +11,6 @@ use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-use App\Notifications\ClientUploadedDocument;
 use App\Notifications\DocumentRequestCompleted;
 use Illuminate\Support\Facades\Storage;
 
@@ -137,240 +136,6 @@ class PortalController extends Controller
             'isCorrectClient'
         ));
     }
-
-    // public function upload(Request $request, $token)
-    // {
-    //     $hashed = hash('sha256', trim($token));
-
-    //     $documentRequest = DocumentRequest::with(['owner.plan'])
-    //         ->where('access_token', $hashed)
-    //         ->firstOrFail();
-
-    //     if ($documentRequest->isExpired()) {
-    //         return response()->json([
-    //             'message' => 'This request has expired.'
-    //         ], 403);
-    //     }
-
-    //     if (
-    //         $documentRequest->status === DocumentRequest::STATUS_COMPLETED ||
-    //         $documentRequest->status === DocumentRequest::STATUS_CANCELLED
-    //     ) {
-    //         return response()->json([
-    //             'message' => 'Uploads are not allowed for this request.'
-    //         ], 403);
-    //     }
-
-    //     $owner = $documentRequest->owner;
-    //     $plan  = $owner?->plan;
-
-    //     if (!$plan) {
-    //         return response()->json([
-    //             'message' => 'No active plan found.'
-    //         ], 403);
-    //     }
-
-    //     $maxUploadBytes    = $plan->maxUploadBytes();      // null = unlimited
-    //     $storageLimitBytes = $plan->storageBytes();        // null = unlimited
-    //     $allowedMimes      = $plan->allowedMimeTypes();
-
-
-    //     $rules = ['required', 'file'];
-
-    //     // File size limit (Laravel max uses KB)
-    //     if ($maxUploadBytes !== null) {
-    //         $rules[] = 'max:' . ($maxUploadBytes / 1024);
-    //     }
-
-    //     // Mime restriction
-    //     if (!in_array('*', $allowedMimes)) {
-    //         $rules[] = 'mimetypes:' . implode(',', $allowedMimes);
-    //     }
-
-    //     $validated = $request->validate([
-    //         'file'        => $rules,
-    //         'field_label' => ['required', 'string', 'max:255'],
-    //     ]);
-
-    //     $file     = $validated['file'];
-    //     $fileSize = $file->getSize();
-
-    //     try {
-
-    //         return DB::transaction(function () use (
-    //             $documentRequest,
-    //             $file,
-    //             $validated,
-    //             $owner,
-    //             $fileSize,
-    //             $plan,
-    //             $storageLimitBytes
-    //         ) {
-
-    //             $lockedOwner = User::whereKey($owner->id)
-    //                 ->lockForUpdate()
-    //                 ->first();
-
-    //             /*
-    //         |--------------------------------------------------------------------------
-    //         | STORAGE LIMIT (Enterprise Safe)
-    //         |--------------------------------------------------------------------------
-    //         */
-
-    //             $currentStorage = DocumentRequest::where('owner_id', $lockedOwner->id)
-    //                 ->selectRaw('SUM(total_upload_size) as total')
-    //                 ->lockForUpdate()
-    //                 ->value('total') ?? 0;
-
-    //             if (
-    //                 $storageLimitBytes !== null &&
-    //                 ($currentStorage + $fileSize) > $storageLimitBytes
-    //             ) {
-    //                 throw ValidationException::withMessages([
-    //                     'file' => 'Storage quota exceeded.'
-    //                 ]);
-    //             }
-
-    //             /*
-    //         |--------------------------------------------------------------------------
-    //         | MULTIPLE UPLOAD CONTROL
-    //         |--------------------------------------------------------------------------
-    //         */
-
-    //             if (!$plan->allow_multiple_uploads) {
-
-    //                 $exists = DocumentUpload::where('document_request_id', $documentRequest->id)
-    //                     ->where('field_label', $validated['field_label'])
-    //                     ->lockForUpdate()
-    //                     ->exists();
-
-    //                 if ($exists) {
-    //                     throw ValidationException::withMessages([
-    //                         'file' => 'This field already has a document uploaded.'
-    //                     ]);
-    //                 }
-    //             }
-
-    //             /*
-    //         |--------------------------------------------------------------------------
-    //         | DUPLICATE FILE DETECTION (SHA-256)
-    //         |--------------------------------------------------------------------------
-    //         */
-
-    //             $hash = hash_file('sha256', $file->getRealPath());
-
-    //             $duplicate = DocumentUpload::where('document_request_id', $documentRequest->id)
-    //                 ->where('file_hash', $hash)
-    //                 ->exists();
-
-    //             if ($duplicate) {
-    //                 throw ValidationException::withMessages([
-    //                     'file' => 'Duplicate file detected.'
-    //                 ]);
-    //             }
-
-    //             /*
-    //         |--------------------------------------------------------------------------
-    //         | SECURE FILE NAME
-    //         |--------------------------------------------------------------------------
-    //         */
-
-    //             $safeOriginal = Str::of($file->getClientOriginalName())
-    //                 ->replaceMatches('/[^A-Za-z0-9.\-_]/', '_')
-    //                 ->limit(120, '');
-
-    //             $filename = Str::uuid() . '.' . $file->guessExtension();
-
-    //             // Use disk from request snapshot OR default
-    //             $disk = $documentRequest->disk ?? config('filesystems.default');
-
-    //             $path = $file->storeAs(
-    //                 "client_uploads/{$lockedOwner->uuid}/requests/{$documentRequest->uuid}",
-    //                 $filename,
-    //                 $disk
-    //             );
-
-    //             /*
-    //         |--------------------------------------------------------------------------
-    //         | CREATE RECORD
-    //         |--------------------------------------------------------------------------
-    //         */
-
-    //             DocumentUpload::create([
-    //                 'document_request_id' => $documentRequest->id,
-    //                 'owner_id'            => $lockedOwner->id,
-    //                 'uploaded_by'         => null,
-    //                 'field_label'         => $validated['field_label'],
-    //                 'file_path'           => $path,
-    //                 'disk'                => $disk,
-    //                 'original_name'       => $safeOriginal,
-    //                 'mime_type'           => $file->getMimeType(),
-    //                 'file_extension'      => $file->getClientOriginalExtension(),
-    //                 'file_size'           => $fileSize,
-    //                 'file_hash'           => $hash,
-    //                 'uploaded_at'         => now(),
-    //             ]);
-
-    //             $lockedOwner->notify(
-    //                 new ClientUploadedDocument(
-    //                     $documentRequest,
-    //                     $validated['field_label']
-    //                 )
-    //             );
-
-    //             /*
-    //         |--------------------------------------------------------------------------
-    //         | PROGRESS
-    //         |--------------------------------------------------------------------------
-    //         */
-
-    //             $documentRequest->refresh();
-
-    //             $isCompleted =
-    //                 $documentRequest->upload_count >= $documentRequest->total_fields;
-
-    //             $documentRequest->update([
-    //                 'status' => $isCompleted
-    //                     ? DocumentRequest::STATUS_COMPLETED
-    //                     : DocumentRequest::STATUS_IN_PROGRESS,
-    //                 'completed_at'     => $isCompleted ? now() : null,
-    //                 'last_activity_at' => now(),
-    //             ]);
-
-    //             if ($isCompleted) {
-    //                 DocumentRequestEvent::log(
-    //                     $documentRequest,
-    //                     'completed'
-    //                 );
-
-    //                 $lockedOwner->notify(
-    //                     new DocumentRequestCompleted($documentRequest)
-    //                 );
-    //             }
-
-    //             return response()->json([
-    //                 'success' => true,
-    //                 'message' => 'Uploaded successfully!'
-    //             ]);
-    //         });
-    //     } catch (ValidationException $e) {
-
-    //         return response()->json([
-    //             'message' => $e->errors()['file'][0]
-    //         ], 422);
-    //     } catch (\Throwable $e) {
-
-    //         Log::error('UPLOAD_FAILURE', [
-    //             'error'      => $e->getMessage(),
-    //             'owner_id'   => $owner->id ?? null,
-    //             'request_id' => $documentRequest->id ?? null
-    //         ]);
-
-    //         return response()->json([
-    //             'message' => 'Upload failed. Please try again.'
-    //         ], 500);
-    //     }
-    // }
 
 
     public function upload(Request $request, $token)
@@ -553,18 +318,18 @@ class PortalController extends Controller
                     'uploaded_at'         => now(),
                 ]);
 
-                /*
-            |--------------------------------------------------------------------------
-            | NOTIFICATION
-            |--------------------------------------------------------------------------
-            */
+                //     /*
+                // |--------------------------------------------------------------------------
+                // | NOTIFICATION
+                // |--------------------------------------------------------------------------
+                // */
 
-                $lockedOwner->notify(
-                    new ClientUploadedDocument(
-                        $documentRequest,
-                        $validated['field_label']
-                    )
-                );
+                //     $lockedOwner->notify(
+                //         new ClientUploadedDocument(
+                //             $documentRequest,
+                //             $validated['field_label']
+                //         )
+                //     );
 
                 /*
             |--------------------------------------------------------------------------

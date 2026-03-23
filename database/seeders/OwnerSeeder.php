@@ -20,7 +20,7 @@ class OwnerSeeder extends Seeder
 
         // Create or update SaaS Owner
         $user = User::updateOrCreate(
-            ['email' => 'owner@filecollect.com'],
+            ['email' => 'vrittantak@gmail.com'],
             [
                 'uuid' => Str::uuid(),
 
@@ -29,7 +29,7 @@ class OwnerSeeder extends Seeder
                 'first_name' => 'Platform',
                 'last_name' => 'Owner',
 
-                'password' => Hash::make('111'),
+                'password' => Hash::make('Hkct@X1N!%gtX'),
 
                 'email_verified_at' => now(),
                 'is_active' => true,

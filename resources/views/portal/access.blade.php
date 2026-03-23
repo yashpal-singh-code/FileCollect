@@ -33,9 +33,7 @@
                     {{-- ================= Uploaded File ================= --}}
                     @if ($uploaded)
                         <div class="bg-slate-50 border border-slate-200 p-3 text-xs flex justify-between items-center">
-
                             <div>
-
                                 <p class="font-medium truncate max-w-xs">
                                     {{ $uploaded->original_name }}
                                 </p>
@@ -44,79 +42,76 @@
                                     {{ round($uploaded->file_size / 1024 / 1024, 2) }} MB
                                     • {{ optional($uploaded->uploaded_at)->format('d M Y') }}
                                 </p>
-
                             </div>
-
                         </div>
 
+                        {{-- ================= NOT UPLOADED ================= --}}
+                    @else
+                        {{-- 🔴 EXPIRED --}}
+                        @if ($documentRequest->isExpired())
+                            <div class="border border-red-200 bg-red-50 p-4 text-center">
 
-                        {{-- ================= Upload UI ================= --}}
-                    @elseif(!$documentRequest->isExpired())
-                        <div x-data="uploadComponent(
-                            '{{ route('portal.upload', $token) }}',
-                            '{{ $field['label'] }}',
-                            {{ $maxUploadBytes ?? 0 }},
-                            {{ $storageRemaining ?? 0 }}
-                        )" class="space-y-2">
+                                <p class="text-sm text-red-600 font-medium">
+                                    Upload disabled — request expired
+                                </p>
 
-                            <!-- File Input -->
-                            <input type="file" x-ref="fileInput" @change="selectFile"
-                                :disabled="$store.uploadManager.active"
-                                class="block w-full border border-slate-300 px-3 py-1.5 text-xs disabled:opacity-50 cursor-pointer">
-
-                            <!-- Buttons -->
-                            <div class="flex gap-2">
-
-                                <!-- Upload -->
-                                <button @click="upload" :disabled="uploading || !file || $store.uploadManager.active"
-                                    class="px-4 py-1.5 text-xs bg-slate-900 text-white hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
-
-                                    <span x-show="!uploading && !$store.uploadManager.active">
-                                        Upload
-                                    </span>
-
-                                    <span x-show="uploading">
-                                        Uploading...
-                                    </span>
-
-                                    <span x-show="!uploading && $store.uploadManager.active">
-                                        Wait...
-                                    </span>
-
-                                </button>
-
-
-                                <!-- Cancel -->
-                                <button x-show="file" @click="handleCancel" type="button"
-                                    :disabled="$store.uploadManager.active && !uploading"
-                                    class="px-4 py-1.5 text-xs border border-slate-300 hover:bg-slate-100 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
-
-                                    <span x-text="uploading ? 'Cancel Upload' : 'Cancel'"></span>
-
-                                </button>
+                                <p class="text-xs text-red-500 mt-1">
+                                    Expired on {{ $documentRequest->expires_at->format('d M Y') }}
+                                </p>
 
                             </div>
 
+                            {{-- 🟢 ACTIVE --}}
+                        @else
+                            <div x-data="uploadComponent(
+                                '{{ route('portal.upload', $token) }}',
+                                '{{ $field['label'] }}',
+                                {{ $maxUploadBytes ?? 0 }},
+                                {{ $storageRemaining ?? 0 }}
+                            )" class="space-y-2">
 
-                            <!-- Progress -->
-                            <div x-show="uploading" class="mt-2">
+                                <!-- File Input -->
+                                <input type="file" x-ref="fileInput" @change="selectFile"
+                                    :disabled="$store.uploadManager.active"
+                                    class="block w-full border border-slate-300 px-3 py-1.5 text-xs disabled:opacity-50 cursor-pointer">
 
-                                <div class="w-full bg-slate-200 h-1.5 overflow-hidden">
+                                <!-- Buttons -->
+                                <div class="flex gap-2">
 
-                                    <div class="bg-blue-500 h-full transition-all" :style="'width:' + percent + '%'"></div>
+                                    <button @click="upload" :disabled="uploading || !file || $store.uploadManager.active"
+                                        class="px-4 py-1.5 text-xs bg-slate-900 text-white hover:bg-blue-600 transition disabled:opacity-50">
+
+                                        <span x-show="!uploading && !$store.uploadManager.active">Upload</span>
+                                        <span x-show="uploading">Uploading...</span>
+                                        <span x-show="!uploading && $store.uploadManager.active">Wait...</span>
+
+                                    </button>
+
+                                    <button x-show="file" @click="handleCancel" type="button"
+                                        :disabled="$store.uploadManager.active && !uploading"
+                                        class="px-4 py-1.5 text-xs border border-slate-300 hover:bg-slate-100 transition">
+
+                                        <span x-text="uploading ? 'Cancel Upload' : 'Cancel'"></span>
+
+                                    </button>
 
                                 </div>
 
-                                <p class="text-[10px] mt-1 text-slate-500" x-text="percent + '%'"></p>
+                                <!-- Progress -->
+                                <div x-show="uploading" class="mt-2">
+                                    <div class="w-full bg-slate-200 h-1.5 overflow-hidden">
+                                        <div class="bg-blue-500 h-full transition-all" :style="'width:' + percent + '%'">
+                                        </div>
+                                    </div>
+                                    <p class="text-[10px] mt-1 text-slate-500" x-text="percent + '%'"></p>
+                                </div>
+
+                                <!-- Message -->
+                                <div x-show="message" class="text-xs" :class="success ? 'text-emerald-600' : 'text-red-600'"
+                                    x-text="message"></div>
 
                             </div>
-
-
-                            <!-- Message -->
-                            <div x-show="message" class="text-xs" :class="success ? 'text-emerald-600' : 'text-red-600'"
-                                x-text="message"></div>
-
-                        </div>
+                        @endif
                     @endif
 
                 </div>

@@ -97,10 +97,10 @@
                                 @if ($plan->is_free)
                                     Free Plan
                                 @else
-                                    ${{ $plan->monthly_price }} /mo
+                                    ₹{{ $plan->monthly_price }} /mo
 
                                     <span class="text-xs text-neutral-400">
-                                        (${{ $plan->yearly_price }} yearly)
+                                        (₹{{ $plan->yearly_price }} yearly)
                                     </span>
                                 @endif
 

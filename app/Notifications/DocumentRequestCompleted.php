@@ -3,10 +3,11 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
+use Illuminate\Notifications\Messages\MailMessage;
 
-class DocumentRequestCompleted extends Notification
+class DocumentRequestCompleted extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -17,26 +18,59 @@ class DocumentRequestCompleted extends Notification
         $this->documentRequest = $documentRequest;
     }
 
+    /**
+     * Channels
+     */
     public function via($notifiable)
     {
-        return ['mail', 'database'];
+        return ['database', 'mail'];
     }
 
-    public function toMail($notifiable)
+    /**
+     * ✅ Get Client Full Name
+     */
+    protected function getClientName()
     {
-        return (new MailMessage)
-            ->subject('Document Request Completed')
-            ->line('All documents have been uploaded.')
-            ->line('Request Number: ' . $this->documentRequest->request_number)
-            ->action('View Request', url('/document-requests/' . $this->documentRequest->id));
+        if ($this->documentRequest->client) {
+            return trim(
+                ($this->documentRequest->client->first_name ?? '') . ' ' .
+                    ($this->documentRequest->client->last_name ?? '')
+            );
+        }
+
+        return 'Client';
     }
 
+    /**
+     * DATABASE NOTIFICATION
+     */
     public function toDatabase($notifiable)
     {
+        $clientName = $this->getClientName();
+
         return [
-            'title' => 'Document Request Completed',
+            'title' => '✅ Document Request Completed',
+            'message' => "All documents uploaded by {$clientName}",
+            'client_name' => $clientName,
             'request_number' => $this->documentRequest->request_number,
             'document_request_id' => $this->documentRequest->id,
         ];
+    }
+
+    /**
+     * EMAIL (CUSTOM BLADE TEMPLATE)
+     */
+    public function toMail($notifiable)
+    {
+        $clientName = $this->getClientName();
+
+        return (new MailMessage)
+            ->subject("{$clientName}|document upload")
+            ->view('emails.document_request_completed', [
+                'clientName'     => $clientName,
+                'recipientName'  => $notifiable->first_name ?? 'User',
+                'requestNumber'  => $this->documentRequest->request_number,
+                'url'            => route('document-requests.show', $this->documentRequest->id),
+            ]);
     }
 }
