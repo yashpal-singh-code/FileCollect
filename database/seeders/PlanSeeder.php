@@ -69,8 +69,8 @@ class PlanSeeder extends Seeder
                     'is_active' => true,
                     'sort_order' => 2,
 
-                    'razorpay_plan_monthly' => env('RAZORPAY_STARTER_MONTHLY'),
-                    'razorpay_plan_yearly' => env('RAZORPAY_STARTER_YEARLY'),
+                    'razorpay_plan_monthly' => 'plan_SUE9apYQTZeGg6',
+                    'razorpay_plan_yearly' => 'plan_SUEBHlCbELZVZf',
 
                     'company_users' => 2,
                     'clients' => 50,
@@ -104,8 +104,8 @@ class PlanSeeder extends Seeder
                     'is_active' => true,
                     'sort_order' => 3,
 
-                    'razorpay_plan_monthly' => env('RAZORPAY_GROWTH_MONTHLY'),
-                    'razorpay_plan_yearly' => env('RAZORPAY_GROWTH_YEARLY'),
+                    'razorpay_plan_monthly' => 'plan_SUEC6CDLtUa2jf',
+                    'razorpay_plan_yearly' => 'plan_SUEChZYHN8PhMM',
 
                     'company_users' => 10,
                     'clients' => 100,
@@ -139,8 +139,8 @@ class PlanSeeder extends Seeder
                     'is_active' => true,
                     'sort_order' => 4,
 
-                    'razorpay_plan_monthly' => env('RAZORPAY_PRO_MONTHLY'),
-                    'razorpay_plan_yearly' => env('RAZORPAY_PRO_YEARLY'),
+                    'razorpay_plan_monthly' => 'plan_SUED69bRnlpiEK',
+                    'razorpay_plan_yearly' => 'plan_SUEDe5PpBrHG5y',
 
                     'company_users' => 25,
                     'clients' => 500,
