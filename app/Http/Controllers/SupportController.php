@@ -47,7 +47,7 @@ class SupportController extends Controller
 
             $attachmentPath = $request
                 ->file('attachment')
-                ->store('support-attachments', 'public');
+                ->store('support-attachments', 's3');
         }
 
         Support::create([
