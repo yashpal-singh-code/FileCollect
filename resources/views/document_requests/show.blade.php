@@ -184,7 +184,7 @@
                         </div>
 
                         @if ($request->uploads->isNotEmpty())
-                            <a href="{{ route('requests.downloadAll', $request->id) }}" target="_blank"
+                            <a href="{{ route('requests.downloadAll', $request->id) }}"
                                 class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium border
                    text-neutral-600 border-neutral-300 bg-neutral-100
                    hover:bg-neutral-200
@@ -235,7 +235,7 @@
                             </div>
 
                             <div class="flex items-start sm:items-center mt-3 sm:mt-0">
-                                <a href="{{ route('requests.download', $doc) }}" target="_blank"
+                                <a href="{{ route('requests.download', $doc) }}"
                                     class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium border
                        text-neutral-600 border-neutral-300 bg-neutral-100
                        hover:bg-neutral-200
