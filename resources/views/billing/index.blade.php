@@ -97,12 +97,12 @@
                 let response = await fetch('/subscriptions/create', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/x-www-form-urlencoded',
                         'X-CSRF-TOKEN': csrf
                     },
-                    body: JSON.stringify({
-                        plan,
-                        billing
+                    body: new URLSearchParams({
+                        plan: plan,
+                        billing: billing
                     })
                 });
 
