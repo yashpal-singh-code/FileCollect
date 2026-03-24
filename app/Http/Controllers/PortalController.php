@@ -289,7 +289,7 @@ class PortalController extends Controller
 
                 $filename = Str::uuid() . '.' . $file->guessExtension();
 
-                $disk = $documentRequest->disk ?? config('filesystems.default');
+                $disk = 'private';
 
                 $path = $file->storeAs(
                     "client_uploads/{$lockedOwner->uuid}/requests/{$documentRequest->uuid}",

@@ -175,7 +175,7 @@
 
                         <div>
                             <div class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                                Documemts
+                                Documents
                             </div>
 
                             <div class="flex items-center gap-2 mt-1 text-xs text-neutral-500 dark:text-neutral-400">
@@ -184,13 +184,13 @@
                         </div>
 
                         @if ($request->uploads->isNotEmpty())
-                            <a href="{{ route('requests.downloadAll', $request->id) }}"
+                            <a href="{{ route('requests.downloadAll', $request->id) }}" target="_blank"
                                 class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium border
-                    text-neutral-600 border-neutral-300 bg-neutral-100
-                    hover:bg-neutral-200
-                    dark:text-neutral-300 dark:border-neutral-700 dark:bg-neutral-800
-                    dark:hover:bg-neutral-700
-                    transition cursor-pointer">
+                   text-neutral-600 border-neutral-300 bg-neutral-100
+                   hover:bg-neutral-200
+                   dark:text-neutral-300 dark:border-neutral-700 dark:bg-neutral-800
+                   dark:hover:bg-neutral-700
+                   transition cursor-pointer">
 
                                 <x-lucide-download class="w-4 h-4" />
                                 Download All
@@ -208,8 +208,8 @@
 
                             <div
                                 class="w-9 h-9 rounded-full
-                            bg-neutral-200 dark:bg-neutral-700
-                            flex items-center justify-center shrink-0">
+                    bg-neutral-200 dark:bg-neutral-700
+                    flex items-center justify-center shrink-0">
                                 <x-lucide-file class="w-4 h-4 text-neutral-600 dark:text-neutral-300" />
                             </div>
 
@@ -235,13 +235,13 @@
                             </div>
 
                             <div class="flex items-start sm:items-center mt-3 sm:mt-0">
-                                <a href="{{ route('requests.download', $doc) }}"
+                                <a href="{{ route('requests.download', $doc) }}" target="_blank"
                                     class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium border
-        text-neutral-600 border-neutral-300 bg-neutral-100
-        hover:bg-neutral-200
-        dark:text-neutral-300 dark:border-neutral-700 dark:bg-neutral-800
-        dark:hover:bg-neutral-700
-        transition cursor-pointer">
+                       text-neutral-600 border-neutral-300 bg-neutral-100
+                       hover:bg-neutral-200
+                       dark:text-neutral-300 dark:border-neutral-700 dark:bg-neutral-800
+                       dark:hover:bg-neutral-700
+                       transition cursor-pointer">
 
                                     <x-lucide-download class="w-4 h-4" />
                                     Download

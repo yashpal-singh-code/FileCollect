@@ -638,7 +638,7 @@ class DocumentRequestController extends Controller
 
     public function download(DocumentUpload $upload)
     {
-        // Tenant security
+        // 🔒 Tenant security
         abort_unless($upload->owner_id === Auth::id(), 403);
 
         /** @var FilesystemAdapter $disk */
@@ -662,7 +662,7 @@ class DocumentRequestController extends Controller
         // Client name
         $clientName = optional($request?->client)->full_name ?? 'client';
 
-        // Generate clean filename
+        // Clean filename
         $fileName =
             Str::slug($clientName)
             . '-'
@@ -672,14 +672,23 @@ class DocumentRequestController extends Controller
             . '.'
             . $extension;
 
-        return $disk->download($upload->file_path, $fileName);
-    }
+        // 🔥 Generate secure temporary URL (FORCE DOWNLOAD)
+        $url = $disk->temporaryUrl(
+            $upload->file_path,
+            now()->addMinutes(5),
+            [
+                'ResponseContentDisposition' => 'attachment; filename="' . $fileName . '"'
+            ]
+        );
 
+        // 🔒 Redirect to S3 secure URL
+        return redirect($url);
+    }
 
     public function downloadAll($id)
     {
         $request = DocumentRequest::where('id', $id)
-            ->where('owner_id', Auth::id()) // tenant security
+            ->where('owner_id', Auth::id())
             ->with(['uploads', 'client'])
             ->firstOrFail();
 
@@ -693,11 +702,13 @@ class DocumentRequestController extends Controller
             . '-' . $request->request_number
             . '.zip';
 
-        $zipPath = storage_path('app/temp/' . $zipName);
+        $tempDir = storage_path('app/temp');
 
-        if (!file_exists(storage_path('app/temp'))) {
-            mkdir(storage_path('app/temp'), 0755, true);
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0755, true);
         }
+
+        $zipPath = $tempDir . '/' . $zipName;
 
         $zip = new \ZipArchive;
 
@@ -712,8 +723,6 @@ class DocumentRequestController extends Controller
             if (!$disk->exists($upload->file_path)) {
                 continue;
             }
-
-            $fileContent = $disk->get($upload->file_path);
 
             $label = $upload->field_label
                 ?? pathinfo($upload->original_name, PATHINFO_FILENAME)
@@ -732,7 +741,7 @@ class DocumentRequestController extends Controller
                 . '.'
                 . $extension;
 
-            // Prevent duplicate names inside ZIP
+            // Prevent duplicate names
             $finalName = $fileName;
             $counter = 1;
 
@@ -745,7 +754,13 @@ class DocumentRequestController extends Controller
                 $counter++;
             }
 
-            $zip->addFromString($finalName, $fileContent);
+            // 🔥 STREAM FROM S3 (no memory issue)
+            $stream = $disk->readStream($upload->file_path);
+
+            if ($stream) {
+                $zip->addFromString($finalName, stream_get_contents($stream));
+                fclose($stream);
+            }
         }
 
         $zip->close();
