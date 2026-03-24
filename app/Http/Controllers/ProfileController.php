@@ -97,13 +97,13 @@ class ProfileController extends Controller
         */
         if ($request->hasFile('avatar')) {
 
-            if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
-                Storage::disk('public')->delete($user->avatar);
+            if ($user->avatar && Storage::disk('s3')->exists($user->avatar)) {
+                Storage::disk('s3')->delete($user->avatar);
             }
 
             $validated['avatar'] = $request
                 ->file('avatar')
-                ->store('avatars', 'public');
+                ->store('avatars', 's3');
         }
 
         $user->update($validated);

@@ -135,7 +135,7 @@
                         </h2>
 
                         @if (optional($documentRequest->owner->companySetting)->company_logo)
-                            <img src="{{ asset('storage/' . $documentRequest->owner->companySetting->company_logo) }}"
+                            <img src="{{ Storage::disk('s3')->url($documentRequest->owner->companySetting->company_logo) }}"
                                 class="h-16 object-contain">
                         @else
                             <span class="text-slate-400 text-xs font-semibold">

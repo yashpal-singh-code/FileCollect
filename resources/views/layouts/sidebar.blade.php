@@ -285,9 +285,9 @@
             class="w-full flex items-center gap-3 px-3 py-2 rounded-lg
            hover:bg-neutral-100 dark:hover:bg-neutral-800 transition cursor-pointer">
 
-            @if (auth()->user()->avatar && file_exists(public_path('storage/' . auth()->user()->avatar)))
+            @if (auth()->user()->avatar)
                 <img class="w-9 h-9 rounded-full border border-neutral-200 dark:border-neutral-700 shrink-0 object-cover"
-                    src="{{ asset('storage/' . auth()->user()->avatar) }}" alt="{{ auth()->user()->name }}">
+                    src="{{ Storage::disk('s3')->url(auth()->user()->avatar) }}" alt="{{ auth()->user()->name }}">
             @else
                 <div
                     class="w-9 h-9 rounded-full flex items-center justify-center

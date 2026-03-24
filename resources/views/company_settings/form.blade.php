@@ -83,7 +83,8 @@
 
                             @if ($company && $company->company_logo)
                                 <div class="mb-2">
-                                    <img src="{{ Storage::url($company->company_logo) }}" class="h-12 object-contain">
+                                    <img src="{{ Storage::disk('s3')->url($company->company_logo) }}"
+                                        class="h-12 object-contain">
                                 </div>
                             @endif
 

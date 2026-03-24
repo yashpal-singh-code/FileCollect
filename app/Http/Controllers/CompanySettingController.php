@@ -54,7 +54,7 @@ class CompanySettingController extends Controller
         if ($request->hasFile('company_logo')) {
             $validated['company_logo'] = $request
                 ->file('company_logo')
-                ->store('company_logos', 'public');
+                ->store('company_logos', 's3');
         }
 
         $validated['owner_id'] = Auth::id();
@@ -81,14 +81,14 @@ class CompanySettingController extends Controller
 
             if (
                 $company->company_logo &&
-                Storage::disk('public')->exists($company->company_logo)
+                Storage::disk('s3')->exists($company->company_logo)
             ) {
-                Storage::disk('public')->delete($company->company_logo);
+                Storage::disk('s3')->delete($company->company_logo);
             }
 
             $validated['company_logo'] = $request
                 ->file('company_logo')
-                ->store('company_logos', 'public');
+                ->store('company_logos', 's3');
         }
 
         $company->update($validated);

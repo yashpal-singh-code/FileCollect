@@ -164,7 +164,7 @@
 
                                     @if ($user->avatar)
                                         <div class="mb-3">
-                                            <img src="{{ asset('storage/' . $user->avatar) }}"
+                                            <img src="{{ Storage::disk('s3')->url($user->avatar) }}"
                                                 class="h-16 w-16 rounded-full object-cover border border-neutral-300 dark:border-neutral-700">
                                         </div>
                                     @endif
