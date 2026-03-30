@@ -4,7 +4,7 @@
     <section id="contact" class="scroll-mt-24 relative bg-white dark:bg-[#020617] py-20 sm:py-24 lg:py-28 overflow-hidden">
 
         {{-- BACKGROUND GLOW --}}
-        <div class="absolute inset-0 bg-gradient-to-tr from-blue-500/10 via-transparent to-purple-500/10 blur-3xl"></div>
+        <div class="absolute inset-0 bg-linear-to-tr from-blue-500/10 via-transparent to-purple-500/10 blur-3xl"></div>
 
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -19,7 +19,7 @@
 
                 <h1 class="mt-5 text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white leading-tight">
                     We’re here to simplify your
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                    <span class="text-transparent bg-clip-text bg-linear-to-r from-blue-600 to-purple-600">
                         document collection
                     </span>
                 </h1>
@@ -123,7 +123,7 @@
                     </div>
 
                     <button
-                        class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-semibold hover:opacity-90 transition shadow-lg">
+                        class="w-full bg-linear-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-semibold hover:opacity-90 transition shadow-lg">
                         Send Message
                     </button>
 
