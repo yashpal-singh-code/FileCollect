@@ -741,6 +741,7 @@
                         {{-- FEATURES --}}
                         <ul class="space-y-2 text-sm mb-6">
 
+                            {{-- Core Limits --}}
                             <li class="flex items-center gap-2">
                                 <x-lucide-users class="w-4 h-4 text-slate-400" />
                                 {{ $plan->company_users ?? 'Unlimited' }} Users
@@ -757,8 +758,69 @@
                             </li>
 
                             <li class="flex items-center gap-2">
+                                <x-lucide-layers class="w-4 h-4 text-slate-400" />
+                                {{ $plan->template_limit ?? 'Unlimited' }} Templates
+                            </li>
+
+                            {{-- Storage --}}
+                            <li class="flex items-center gap-2">
                                 <x-lucide-hard-drive class="w-4 h-4 text-slate-400" />
                                 {{ $plan->storage_mb }} MB Storage
+                            </li>
+
+                            <li class="flex items-center gap-2">
+                                <x-lucide-upload class="w-4 h-4 text-slate-400" />
+                                {{ $plan->file_size_limit_mb }} MB File Size Limit
+                            </li>
+
+                            {{-- Features --}}
+                            <li class="flex items-center gap-2">
+                                <x-lucide-check
+                                    class="w-4 h-4 {{ $plan->client_portal ? 'text-green-500' : 'text-gray-300' }}" />
+                                Client Portal
+                            </li>
+
+                            <li class="flex items-center gap-2">
+                                <x-lucide-check
+                                    class="w-4 h-4 {{ $plan->mfa_authentication ? 'text-green-500' : 'text-gray-300' }}" />
+                                MFA Authentication
+                            </li>
+
+                            <li class="flex items-center gap-2">
+                                <x-lucide-check
+                                    class="w-4 h-4 {{ $plan->download_zip ? 'text-green-500' : 'text-gray-300' }}" />
+                                Download as ZIP
+                            </li>
+
+                            <li class="flex items-center gap-2">
+                                <x-lucide-check
+                                    class="w-4 h-4 {{ $plan->expiry_tracking ? 'text-green-500' : 'text-gray-300' }}" />
+                                Expiry Tracking
+                            </li>
+
+                            <li class="flex items-center gap-2">
+                                <x-lucide-check
+                                    class="w-4 h-4 {{ $plan->branding ? 'text-green-500' : 'text-gray-300' }}" />
+                                Custom Branding
+                            </li>
+
+                            <li class="flex items-center gap-2">
+                                <x-lucide-check
+                                    class="w-4 h-4 {{ $plan->white_label ? 'text-green-500' : 'text-gray-300' }}" />
+                                White Label
+                            </li>
+
+                            <li class="flex items-center gap-2">
+                                <x-lucide-check
+                                    class="w-4 h-4 {{ $plan->priority_support ? 'text-green-500' : 'text-gray-300' }}" />
+                                Priority Support
+                            </li>
+
+                            {{-- Upload --}}
+                            <li class="flex items-center gap-2">
+                                <x-lucide-archive
+                                    class="w-4 h-4 {{ $plan->allow_zip ? 'text-green-500' : 'text-gray-300' }}" />
+                                ZIP Upload
                             </li>
 
                         </ul>
