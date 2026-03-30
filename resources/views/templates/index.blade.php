@@ -25,9 +25,9 @@
                 </div>
 
                 <div class="w-full lg:w-auto lg:ml-6">
-
-                    <a href="{{ route('templates.create') }}"
-                        class="w-full lg:w-auto
+                    @can('templates.create')
+                        <a href="{{ route('templates.create') }}"
+                            class="w-full lg:w-auto
 inline-flex items-center justify-center gap-2
 h-10 px-5 text-sm font-medium border
 text-primary-600 border-primary-600/30 bg-primary-600/10
@@ -36,10 +36,11 @@ dark:text-primary-400 dark:border-primary-400/40 dark:bg-primary-400/10
 dark:hover:bg-primary-500 dark:hover:text-white
 transition cursor-pointer">
 
-                        <x-lucide-circle-plus class="w-4 h-4" />
-                        New Template
+                            <x-lucide-circle-plus class="w-4 h-4" />
+                            New Template
 
-                    </a>
+                        </a>
+                    @endcan
 
                 </div>
 
@@ -197,51 +198,54 @@ transition cursor-pointer">
                                 <div class="flex justify-end gap-2">
 
                                     {{-- EDIT --}}
-                                    <a href="{{ route('templates.edit', $template) }}"
-                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border
+                                    @can('templates.edit')
+                                        <a href="{{ route('templates.edit', $template) }}"
+                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border
 text-emerald-600 border-emerald-600/30 bg-emerald-600/10
 hover:bg-emerald-600 hover:text-white
 transition cursor-pointer">
 
-                                        <x-lucide-square-pen class="w-3.5 h-3.5" />
-                                        Edit
+                                            <x-lucide-square-pen class="w-3.5 h-3.5" />
+                                            Edit
 
-                                    </a>
-
+                                        </a>
+                                    @endcan
 
                                     {{-- DUPLICATE --}}
                                     <form method="POST" action="{{ route('templates.duplicate', $template) }}">
                                         @csrf
-
-                                        <button type="submit"
-                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border
+                                        @can('templates.create')
+                                            <button type="submit"
+                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border
 text-primary-600 border-primary-600/30 bg-primary-600/10
 hover:bg-primary-600 hover:text-white
 transition cursor-pointer">
 
-                                            <x-lucide-copy class="w-3.5 h-3.5" />
-                                            Duplicate
+                                                <x-lucide-copy class="w-3.5 h-3.5" />
+                                                Duplicate
 
-                                        </button>
-
+                                            </button>
+                                        @endcan
                                     </form>
 
 
                                     {{-- DELETE --}}
-                                    <button type="button"
-                                        @click="$dispatch('open-template-delete',{
+                                    @can('templates.delete')
+                                        <button type="button"
+                                            @click="$dispatch('open-template-delete',{
 url:'{{ route('templates.destroy', $template) }}',
 name:'{{ $template->name }}'
 })"
-                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border
+                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border
 text-red-600 border-red-600/30 bg-red-600/10
 hover:bg-red-600 hover:text-white
 transition cursor-pointer">
 
-                                        <x-lucide-trash-2 class="w-3.5 h-3.5" />
-                                        Delete
+                                            <x-lucide-trash-2 class="w-3.5 h-3.5" />
+                                            Delete
 
-                                    </button>
+                                        </button>
+                                    @endcan
 
                                 </div>
 

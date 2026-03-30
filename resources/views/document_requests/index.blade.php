@@ -30,31 +30,31 @@
 
                 {{-- RIGHT BUTTON --}}
                 <div class="w-full lg:w-auto">
-
-                    @if (is_null($planLimit) || !$limitReached)
-                        <a href="{{ route('document-requests.create') }}"
-                            class="w-full lg:w-auto inline-flex items-center justify-center gap-2
+                    @can('document_requests.create')
+                        @if (is_null($planLimit) || !$limitReached)
+                            <a href="{{ route('document-requests.create') }}"
+                                class="w-full lg:w-auto inline-flex items-center justify-center gap-2
                         h-10 px-4 sm:px-5 text-sm font-medium border
                         text-primary-600 border-primary-600/30 bg-primary-600/10
                         hover:bg-primary-600 hover:text-white
                         dark:text-primary-400 dark:border-primary-400/40 dark:bg-primary-400/10
                         dark:hover:bg-primary-500 dark:hover:text-white
                         transition cursor-pointer">
-                            <x-lucide-plus class="w-4 h-4" />
-                            New Request
-                        </a>
-                    @else
-                        <a href="{{ route('pricing') }}"
-                            class="w-full lg:w-auto inline-flex items-center justify-center gap-2
+                                <x-lucide-plus class="w-4 h-4" />
+                                New Request
+                            </a>
+                        @else
+                            <a href="{{ route('pricing') }}"
+                                class="w-full lg:w-auto inline-flex items-center justify-center gap-2
                         h-10 px-4 sm:px-5 text-sm font-medium border
                         text-neutral-500 border-neutral-300 bg-neutral-100
                         dark:text-neutral-400 dark:border-neutral-700 dark:bg-neutral-800
                         cursor-not-allowed">
-                            <x-lucide-lock class="w-4 h-4" />
-                            Limit Reached – Upgrade Plan
-                        </a>
-                    @endif
-
+                                <x-lucide-lock class="w-4 h-4" />
+                                Limit Reached – Upgrade Plan
+                            </a>
+                        @endif
+                    @endcan
                 </div>
 
             </div>
@@ -175,8 +175,8 @@
         <div class="space-y-3 max-w-7xl mx-auto">
 
             @forelse($documentRequests as $documentRequest)
-
-                <div onclick="window.location='{{ route('document-requests.show', $documentRequest) }}'"
+                @can('document_requests.view')
+                <div onclick="window.location='{{ route('document-requests.show', $documentRequest) }}'" @endcan
                     class="cursor-pointer
                bg-white dark:bg-neutral-900
                border border-neutral-200 dark:border-neutral-800
@@ -247,49 +247,53 @@
                         </span>
 
                         {{-- VIEW --}}
-                        <a href="{{ route('document-requests.show', $documentRequest) }}"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border
+                        @can('document_requests.view')
+                            <a href="{{ route('document-requests.show', $documentRequest) }}"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border
                 bg-neutral-100 dark:bg-neutral-800
                 text-neutral-700 dark:text-neutral-300
                 hover:bg-neutral-200 dark:hover:bg-neutral-700
                 transition">
 
-                            <x-lucide-eye class="w-3.5 h-3.5" />
-                            View
-                        </a>
-
+                                <x-lucide-eye class="w-3.5 h-3.5" />
+                                View
+                            </a>
+                        @endcan
                         {{-- EDIT --}}
-                        @if (!$documentRequest->isCompleted())
-                            <a href="{{ route('document-requests.edit', $documentRequest) }}"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border
+                        @can('document_requests.edit')
+                            @if (!$documentRequest->isCompleted())
+                                <a href="{{ route('document-requests.edit', $documentRequest) }}"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border
                     text-emerald-600 border-emerald-600/30 bg-emerald-600/10
                     hover:bg-emerald-600 hover:text-white
                     dark:text-emerald-400 dark:border-emerald-400/40 dark:bg-emerald-400/10
                     dark:hover:bg-emerald-500 dark:hover:text-white
                     transition">
 
-                                <x-lucide-square-pen class="w-3.5 h-3.5" />
-                                Edit
-                            </a>
-                        @endif
+                                    <x-lucide-square-pen class="w-3.5 h-3.5" />
+                                    Edit
+                                </a>
+                            @endif
+                        @endcan
 
                         {{-- DELETE --}}
-                        <button type="button"
-                            @click="$dispatch('open-delete', {
+                        @can('document_requests.delete')
+                            <button type="button"
+                                @click="$dispatch('open-delete', {
                         url: '{{ route('document-requests.destroy', $documentRequest) }}',
                         name: 'Request #{{ $documentRequest->request_number }}'
                     })"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border
                 text-red-600 border-red-600/30 bg-red-600/10
                 hover:bg-red-600 hover:text-white
                 dark:text-red-400 dark:border-red-400/40 dark:bg-red-400/10
                 dark:hover:bg-red-500 dark:hover:text-white
                 transition cursor-pointer">
 
-                            <x-lucide-trash-2 class="w-3.5 h-3.5" />
-                            Delete
-                        </button>
-
+                                <x-lucide-trash-2 class="w-3.5 h-3.5" />
+                                Delete
+                            </button>
+                        @endcan
                     </div>
 
                 </div>

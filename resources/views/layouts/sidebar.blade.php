@@ -43,120 +43,138 @@
     <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto" @click="sidebarOpen = false">
 
         <!-- Dashboard -->
-        <a href="{{ route('dashboard') }}"
-            class="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors border-l-2
+        @can('dashboard.view')
+            <a href="{{ route('dashboard') }}"
+                class="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors border-l-2
             {{ request()->routeIs('dashboard')
                 ? 'bg-primary-50 text-primary-700 font-semibold border-primary-600 dark:bg-neutral-800 dark:text-white dark:border-white'
                 : 'text-neutral-600 dark:text-neutral-400 border-transparent hover:bg-neutral-100 dark:hover:bg-neutral-800' }}">
-            <x-lucide-layout-dashboard class="w-5 h-5" />
-            Dashboard
-        </a>
+                <x-lucide-layout-dashboard class="w-5 h-5" />
+                Dashboard
+            </a>
+        @endcan
 
         <!-- document-requests -->
-        <a href="{{ route('document-requests.index') }}"
-            class="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors border-l-2
+        @can('document_requests.view')
+            <a href="{{ route('document-requests.index') }}"
+                class="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors border-l-2
             {{ request()->routeIs('document-requests.*')
                 ? 'bg-primary-50 text-primary-700 font-semibold border-primary-600 dark:bg-neutral-800 dark:text-white dark:border-white'
                 : 'text-neutral-600 dark:text-neutral-400 border-transparent hover:bg-neutral-100 dark:hover:bg-neutral-800' }}">
-            <x-lucide-file-text class="w-5 h-5" />
-            Document Request
-        </a>
+                <x-lucide-file-text class="w-5 h-5" />
+                Document Request
+            </a>
+        @endcan
 
         <!-- Clients -->
-        <a href="{{ route('clients.index') }}"
-            class="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors border-l-2
+        @can('clients.view')
+            <a href="{{ route('clients.index') }}"
+                class="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors border-l-2
             {{ request()->routeIs('clients.*')
                 ? 'bg-primary-50 text-primary-700 font-semibold border-primary-600 dark:bg-neutral-800 dark:text-white dark:border-white'
                 : 'text-neutral-600 dark:text-neutral-400 border-transparent hover:bg-neutral-100 dark:hover:bg-neutral-800' }}">
-            <x-lucide-contact-round class="w-5 h-5" />
-            Clients
-        </a>
+                <x-lucide-contact-round class="w-5 h-5" />
+                Clients
+            </a>
+        @endcan
 
         <!-- Templates -->
-        <a href="{{ route('templates.index') }}"
-            class="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors border-l-2
+        @can('templates.view')
+            <a href="{{ route('templates.index') }}"
+                class="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors border-l-2
             {{ request()->routeIs('templates.*')
                 ? 'bg-primary-50 text-primary-700 font-semibold border-primary-600 dark:bg-neutral-800 dark:text-white dark:border-white'
                 : 'text-neutral-600 dark:text-neutral-400 border-transparent hover:bg-neutral-100 dark:hover:bg-neutral-800' }}">
-            <x-lucide-layout-template class="w-5 h-5" />
-            Templates
-        </a>
-
+                <x-lucide-layout-template class="w-5 h-5" />
+                Templates
+            </a>
+        @endcan
         <!-- Users -->
-        <a href="{{ route('users.index') }}"
-            class="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors border-l-2
+        @can('teams.view')
+            <a href="{{ route('users.index') }}"
+                class="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors border-l-2
             {{ request()->routeIs('users.*')
                 ? 'bg-primary-50 text-primary-700 font-semibold border-primary-600 dark:bg-neutral-800 dark:text-white dark:border-white'
                 : 'text-neutral-600 dark:text-neutral-400 border-transparent hover:bg-neutral-100 dark:hover:bg-neutral-800' }}">
-            <x-lucide-users class="w-5 h-5" />
-            Teams
-        </a>
+                <x-lucide-users class="w-5 h-5" />
+                Teams
+            </a>
+        @endcan
 
         <!-- document-requests -->
-        <a href="{{ route('subscriptions.index') }}"
-            class="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors border-l-2
+        @can('subscriptions.view')
+            <a href="{{ route('subscriptions.index') }}"
+                class="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors border-l-2
             {{ request()->routeIs('subscriptions.*')
                 ? 'bg-primary-50 text-primary-700 font-semibold border-primary-600 dark:bg-neutral-800 dark:text-white dark:border-white'
                 : 'text-neutral-600 dark:text-neutral-400 border-transparent hover:bg-neutral-100 dark:hover:bg-neutral-800' }}">
-            <x-lucide-wallet class="w-5 h-5" />
-            Subscriptions
-        </a>
+                <x-lucide-wallet class="w-5 h-5" />
+                Subscriptions
+            </a>
+        @endcan
+
 
         <!-- Administration Settings -->
-        <div class="space-y-0.5" x-data="{ openMenu: {{ request()->routeIs('company-settings.*', 'roles.manage', 'settings.2mfa') ? 'true' : 'false' }} }">
+        @canany(['company_settings.view', 'roles.view'])
+            <div class="space-y-0.5" x-data="{ openMenu: {{ request()->routeIs('company-settings.*', 'roles.manage', 'settings.2mfa') ? 'true' : 'false' }} }">
 
-            <!-- Main Button -->
-            <button type="button" @click="openMenu = !openMenu"
-                class="w-full flex items-center justify-between px-4 py-2 rounded-lg transition-colors
+                <!-- Main Button -->
+                <button type="button" @click="openMenu = !openMenu"
+                    class="w-full flex items-center justify-between px-4 py-2 rounded-lg transition-colors
           text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800">
 
-                <div class="flex items-center gap-2">
-                    <x-lucide-settings class="w-5 h-5" />
-                    Administration
-                </div>
+                    <div class="flex items-center gap-2">
+                        <x-lucide-settings class="w-5 h-5" />
+                        Administration
+                    </div>
 
-                <x-lucide-chevron-down
-                    class="w-5 h-5 transition-transform duration-300 text-neutral-400 dark:text-neutral-500"
-                    x-bind:class="openMenu ? 'rotate-180' : ''" />
-            </button>
+                    <x-lucide-chevron-down
+                        class="w-5 h-5 transition-transform duration-300 text-neutral-400 dark:text-neutral-500"
+                        x-bind:class="openMenu ? 'rotate-180' : ''" />
+                </button>
 
-            <!-- Submenu -->
-            <div x-show="openMenu" x-collapse x-cloak
-                class="ml-6 mt-1 space-y-0.5 border-l-2 border-neutral-200 dark:border-neutral-700 pl-3">
+                <!-- Submenu -->
+                <div x-show="openMenu" x-collapse x-cloak
+                    class="ml-6 mt-1 space-y-0.5 border-l-2 border-neutral-200 dark:border-neutral-700 pl-3">
 
-                <!-- Company Settings -->
-                <a href="{{ route('company-settings.show') }}"
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors
+                    <!-- Company Settings -->
+                    @can('company_settings.view')
+                        <a href="{{ route('company-settings.show') }}"
+                            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors
             {{ request()->routeIs('company-settings.*')
                 ? 'bg-primary-50 text-primary-700 font-semibold dark:bg-neutral-800 dark:text-white'
                 : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800' }}">
-                    {{-- <x-lucide-building-2 class="w-5 h-5" /> --}}
-                    Company Settings
-                </a>
-
-                <!-- Roles & Permissions -->
-                <a href="{{ route('roles.manage') }}"
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors
+                            {{-- <x-lucide-building-2 class="w-5 h-5" /> --}}
+                            Company Settings
+                        </a>
+                    @endcan
+                    <!-- Roles & Permissions -->
+                    @can('roles.view')
+                        <a href="{{ route('roles.manage') }}"
+                            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors
             {{ request()->routeIs('roles.manage')
                 ? 'bg-primary-50 text-primary-700 font-semibold dark:bg-neutral-800 dark:text-white'
                 : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800' }}">
-                    {{-- <x-lucide-user-round-key class="w-5 h-5" /> --}}
-                    Roles & Permissions
-                </a>
+                            {{-- <x-lucide-user-round-key class="w-5 h-5" /> --}}
+                            Roles & Permissions
+                        </a>
+                    @endcan
 
-                <!-- Roles & Permissions -->
-                <a href="{{ route('settings.2mfa') }}"
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors
+                    <!-- Roles & Permissions -->
+
+                    <a href="{{ route('settings.2mfa') }}"
+                        class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors
             {{ request()->routeIs('settings.2mfa')
                 ? 'bg-primary-50 text-primary-700 font-semibold dark:bg-neutral-800 dark:text-white'
                 : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800' }}">
-                    {{-- <x-lucide-shield-check class="w-5 h-5" /> --}}
-                    Two-Factor Auth
-                </a>
+                        {{-- <x-lucide-shield-check class="w-5 h-5" /> --}}
+                        Two-Factor Auth
+                    </a>
 
+
+                </div>
             </div>
-        </div>
-
+        @endcanany
 
 
         <!-- Templates -->

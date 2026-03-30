@@ -31,7 +31,6 @@
 
         </div>
 
-
         {{-- TENANT USAGE SUMMARY --}}
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
 
@@ -67,8 +66,7 @@
 
         </div>
 
-
-        {{-- SUBSCRIPTION INFO --}}
+        {{-- SUBSCRIPTION INFO (RAZORPAY) --}}
         <div class="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-6">
 
             <h2 class="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-4">
@@ -77,63 +75,54 @@
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
 
+                {{-- STATUS --}}
                 <div>
                     <p class="text-xs text-neutral-500">Status</p>
 
-                    @if ($subscription && $subscription->valid())
+                    @if ($isSubscribed)
                         <span
                             class="inline-flex px-2 py-0.5 text-xs border rounded-full
-                    text-emerald-600 border-emerald-600/30 bg-emerald-600/10
-                    dark:text-emerald-400 dark:border-emerald-400/40 dark:bg-emerald-400/10">
+                        text-emerald-600 border-emerald-600/30 bg-emerald-600/10
+                        dark:text-emerald-400 dark:border-emerald-400/40 dark:bg-emerald-400/10">
                             Active
-                        </span>
-                    @elseif ($subscription && $subscription->onGracePeriod())
-                        <span
-                            class="inline-flex px-2 py-0.5 text-xs border rounded-full
-                    text-yellow-600 border-yellow-600/30 bg-yellow-600/10
-                    dark:text-yellow-400 dark:border-yellow-400/40 dark:bg-yellow-400/10">
-                            Cancelling
                         </span>
                     @else
                         <span
                             class="inline-flex px-2 py-0.5 text-xs border rounded-full
-                    text-neutral-600 border-neutral-300 bg-neutral-100
-                    dark:text-neutral-300 dark:border-neutral-700 dark:bg-neutral-800">
+                        text-neutral-600 border-neutral-300 bg-neutral-100
+                        dark:text-neutral-300 dark:border-neutral-700 dark:bg-neutral-800">
                             Free
                         </span>
                     @endif
-
                 </div>
 
+                {{-- BILLING --}}
                 <div>
                     <p class="text-xs text-neutral-500">Billing Cycle</p>
                     <p class="text-sm text-neutral-900 dark:text-neutral-100">
-                        {{ $subscription ? ucfirst($activeBilling ?? '-') : 'Free' }}
+                        {{ $isSubscribed ? ucfirst($activeBilling ?? '-') : 'Free' }}
                     </p>
                 </div>
 
+                {{-- STARTED --}}
                 <div>
                     <p class="text-xs text-neutral-500">Started</p>
                     <p class="text-sm text-neutral-900 dark:text-neutral-100">
-                        {{ $subscription ? $subscription->created_at->format('d M Y') : $user->created_at->format('d M Y') }}
+                        {{ $user->created_at->format('d M Y') }}
                     </p>
                 </div>
 
+                {{-- NEXT BILLING --}}
                 <div>
                     <p class="text-xs text-neutral-500">Next Billing</p>
                     <p class="text-sm text-neutral-900 dark:text-neutral-100">
-                        @if ($subscription && $currentPeriodEnd)
-                            {{ \Carbon\Carbon::createFromTimestamp($currentPeriodEnd)->format('d M Y') }}
-                        @else
-                            -
-                        @endif
+                        {{ $currentPeriodEnd ? \Carbon\Carbon::parse($currentPeriodEnd)->format('d M Y') : '-' }}
                     </p>
                 </div>
 
             </div>
 
         </div>
-
 
         {{-- COMPANY --}}
         <div class="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-6">

@@ -13,22 +13,20 @@ class RoleSeeder extends Seeder
         // Clear permission cache
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // SaaS Platform Owner
-        Role::firstOrCreate([
-            'name' => 'owner',
-            'guard_name' => 'web'
-        ]);
+        $roles = [
+            'owner',        // SaaS owner (you)
+            'super_admin',  // Tenant owner
+            'admin',
+            'manager',
+            'editor',
+            'viewer',
+        ];
 
-        // Tenant Owner
-        Role::firstOrCreate([
-            'name' => 'super_admin',
-            'guard_name' => 'web'
-        ]);
-
-        // Normal User
-        Role::firstOrCreate([
-            'name' => 'user',
-            'guard_name' => 'web'
-        ]);
+        foreach ($roles as $role) {
+            Role::firstOrCreate([
+                'name' => $role,
+                'guard_name' => 'web'
+            ]);
+        }
     }
 }

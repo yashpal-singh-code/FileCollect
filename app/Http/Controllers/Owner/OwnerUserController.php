@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Hash;
 
 class OwnerUserController extends Controller
 {
-
     /**
      * Display a listing of tenant admins.
      */
@@ -18,7 +17,6 @@ class OwnerUserController extends Controller
     {
         $query = User::role('super_admin')->with('plan');
 
-        // Search
         if ($request->filled('search')) {
             $search = $request->search;
 
@@ -28,7 +26,6 @@ class OwnerUserController extends Controller
             });
         }
 
-        // Status filter
         if ($request->status === 'active') {
             $query->where('is_active', 1);
         }
@@ -42,7 +39,6 @@ class OwnerUserController extends Controller
         return view('owner.users.index', compact('users'));
     }
 
-
     /**
      * Show create form
      */
@@ -55,13 +51,11 @@ class OwnerUserController extends Controller
         return view('owner.users.create', compact('plans'));
     }
 
-
     /**
      * Store tenant
      */
     public function store(Request $request)
     {
-
         $data = $request->validate([
             'name' => 'required|string|max:150',
             'email' => 'required|email|unique:users,email',
@@ -70,12 +64,10 @@ class OwnerUserController extends Controller
         ]);
 
         $data['password'] = Hash::make($request->password);
-
         $data['is_active'] = $request->boolean('is_active');
 
         $user = User::create($data);
 
-        // Assign role
         $user->assignRole('super_admin');
 
         return redirect()
@@ -84,58 +76,51 @@ class OwnerUserController extends Controller
     }
 
     /**
-     * Show tenant
+     * Show tenant (RAZORPAY VERSION)
      */
     public function show(string $id)
     {
         $user = User::with([
             'companySetting',
-            'plan',
-            'subscriptions'
+            'plan'
         ])->findOrFail($id);
 
-        // Get subscription
-        $subscription = $user->subscription('default');
-
-        // Default plan (free plan from users table)
+        // ✅ Default plan (free/manual)
         $activePlan = $user->plan;
-
-        // Billing cycle
         $activeBilling = $user->billing_cycle ?? null;
+        $currentPeriodEnd = $user->current_period_end ?? null;
 
-        // Next billing timestamp
-        $currentPeriodEnd = null;
+        // ✅ Razorpay subscription check
+        $isSubscribed = !empty($user->razorpay_subscription_id);
 
-        if ($subscription) {
+        if ($isSubscribed) {
 
-            // Stripe subscription
-            $stripeSub = $subscription->asStripeSubscription();
-
-            if ($stripeSub) {
-                $currentPeriodEnd = $stripeSub->current_period_end ?? null;
-            }
-
-            // Detect plan using Stripe price
-            $priceId = $subscription->stripe_price;
-
-            $paidPlan = \App\Models\Plan::where('stripe_price_monthly', $priceId)
-                ->orWhere('stripe_price_yearly', $priceId)
+            // 🔍 Match plan using Razorpay plan ID
+            $paidPlan = Plan::where('razorpay_plan_monthly', $user->razorpay_plan_id)
+                ->orWhere('razorpay_plan_yearly', $user->razorpay_plan_id)
                 ->first();
 
             if ($paidPlan) {
                 $activePlan = $paidPlan;
             }
+
+            // 🔄 Detect billing cycle
+            if ($activePlan) {
+                if ($activePlan->razorpay_plan_monthly === $user->razorpay_plan_id) {
+                    $activeBilling = 'monthly';
+                } elseif ($activePlan->razorpay_plan_yearly === $user->razorpay_plan_id) {
+                    $activeBilling = 'yearly';
+                }
+            }
         }
 
-        // Total team members under this tenant
+        // 📊 Stats
         $totalUsers = $user->teamMembers()->count();
-
-        // Total document requests
         $totalDocuments = $user->documentRequests()->count();
 
         return view('owner.users.show', [
             'user' => $user,
-            'subscription' => $subscription,
+            'isSubscribed' => $isSubscribed,
             'activePlan' => $activePlan,
             'activeBilling' => $activeBilling,
             'currentPeriodEnd' => $currentPeriodEnd,
@@ -143,6 +128,10 @@ class OwnerUserController extends Controller
             'totalDocuments' => $totalDocuments,
         ]);
     }
+
+    /**
+     * Edit user
+     */
     public function edit($id)
     {
         $user = User::findOrFail($id);
@@ -151,6 +140,9 @@ class OwnerUserController extends Controller
         return view('owner.users.edit', compact('user', 'plans'));
     }
 
+    /**
+     * Update user
+     */
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
@@ -176,38 +168,4 @@ class OwnerUserController extends Controller
             ->route('owner.users.index')
             ->with('success', 'Tenant updated successfully');
     }
-
-    // /**
-    //  * Delete tenant
-    //  */
-    // public function destroy(string $id)
-    // {
-    //     $user = User::findOrFail($id);
-
-    //     $user->delete();
-
-    //     return redirect()
-    //         ->route('owner.users.index')
-    //         ->with('success', 'Tenant deleted successfully.');
-    // }
-
-
-    // /**
-    //  * Bulk delete tenants
-    //  */
-    // public function bulkDelete(Request $request)
-    // {
-
-    //     $ids = $request->selected_users;
-
-    //     if (!$ids) {
-    //         return back()->with('error', 'No users selected.');
-    //     }
-
-    //     User::whereIn('id', $ids)->delete();
-
-    //     return redirect()
-    //         ->route('owner.users.index')
-    //         ->with('success', 'Selected tenants deleted successfully.');
-    // }
 }

@@ -30,9 +30,9 @@
 
                 {{-- RIGHT BUTTON --}}
                 <div class="w-full lg:w-auto lg:ml-6">
-
-                    <a href="{{ route('clients.create') }}"
-                        class="w-full lg:w-auto
+                    @can('clients.create')
+                        <a href="{{ route('clients.create') }}"
+                            class="w-full lg:w-auto
                 inline-flex items-center justify-center gap-2
                 h-10 px-5 text-sm font-medium border
                 text-primary-600 border-primary-600/30 bg-primary-600/10
@@ -41,11 +41,11 @@
                 dark:hover:bg-primary-500 dark:hover:text-white
                 transition cursor-pointer">
 
-                        <x-lucide-circle-plus class="w-4 h-4" />
-                        Add Client
+                            <x-lucide-circle-plus class="w-4 h-4" />
+                            Add Client
 
-                    </a>
-
+                        </a>
+                    @endcan
                 </div>
 
             </div>
@@ -126,18 +126,19 @@
                 <span class="text-sm text-neutral-600 dark:text-neutral-300">
                     <span id="selected-count">0</span> selected
                 </span>
-
-                <button type="button" @click="$dispatch('open-client-bulk-delete')"
-                    class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border
+                @can('clients.delete')
+                    <button type="button" @click="$dispatch('open-client-bulk-delete')"
+                        class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border
     text-red-600 border-red-600/30 bg-red-600/10
     hover:bg-red-600 hover:text-white
     dark:text-red-400 dark:border-red-400/40 dark:bg-red-400/10
     dark:hover:bg-red-500 dark:hover:text-white
     transition cursor-pointer">
 
-                    <x-lucide-trash-2 class="w-3.5 h-3.5" />
-                    Delete Selected
-                </button>
+                        <x-lucide-trash-2 class="w-3.5 h-3.5" />
+                        Delete Selected
+                    </button>
+                @endcan
             </div>
 
             {{-- TABLE --}}
@@ -147,9 +148,13 @@
 
                     <thead class="bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200">
                         <tr>
+
                             <th class="px-4 py-3 w-10 text-center">
-                                <input type="checkbox" id="select-all" class="w-4 h-4 cursor-pointer">
+                                @can('clients.delete')
+                                    <input type="checkbox" id="select-all" class="w-4 h-4 cursor-pointer">
+                                @endcan
                             </th>
+
                             <th class="px-4 py-3 w-14 text-center">#</th>
                             <th class="px-4 py-3">Client</th>
                             <th class="px-4 py-3">Phone</th>
@@ -205,38 +210,39 @@
                                     <div class="flex justify-end gap-2">
 
                                         {{-- EDIT --}}
-                                        {{-- @can('update', $client) --}}
-                                        <a href="{{ route('clients.edit', $client) }}"
-                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border
+                                        @can('clients.edit')
+                                            <a href="{{ route('clients.edit', $client) }}"
+                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border
                 text-emerald-600 border-emerald-600/30 bg-emerald-600/10
                 hover:bg-emerald-600 hover:text-white
                 dark:text-emerald-400 dark:border-emerald-400/40 dark:bg-emerald-400/10
                 dark:hover:bg-emerald-500 dark:hover:text-white
                 transition cursor-pointer">
-                                            <x-lucide-square-pen class="w-3.5 h-3.5" />
-                                            Edit
-                                        </a>
-                                        {{-- @endcan --}}
+                                                <x-lucide-square-pen class="w-3.5 h-3.5" />
+                                                Edit
+                                            </a>
+                                        @endcan
+
 
 
                                         {{-- DELETE USING MODAL --}}
-                                        {{-- @can('delete', $client) --}}
-                                        <button type="button"
-                                            @click="$dispatch('open-client-delete', {
+                                        @can('clients.delete')
+                                            <button type="button"
+                                                @click="$dispatch('open-client-delete', {
                     url: '{{ route('clients.destroy', $client) }}',
                     name: '{{ $client->full_name }}'
                 })"
-                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border
+                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border
                 text-red-600 border-red-600/30 bg-red-600/10
                 hover:bg-red-600 hover:text-white
                 dark:text-red-400 dark:border-red-400/40 dark:bg-red-400/10
                 dark:hover:bg-red-500 dark:hover:text-white
                 transition cursor-pointer">
 
-                                            <x-lucide-trash-2 class="w-3.5 h-3.5" />
-                                            Delete
-                                        </button>
-                                        {{-- @endcan --}}
+                                                <x-lucide-trash-2 class="w-3.5 h-3.5" />
+                                                Delete
+                                            </button>
+                                        @endcan
 
                                     </div>
                                 </td>

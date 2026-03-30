@@ -11,9 +11,13 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
+
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware('permission:teams.view')->only(['index', 'show']);
+        $this->middleware('permission:teams.create')->only(['create', 'store']);
+        $this->middleware('permission:teams.edit')->only(['edit', 'update']);
+        $this->middleware('permission:teams.delete')->only(['destroy']);
     }
 
     /*
@@ -117,7 +121,7 @@ class UserController extends Controller
 
         $this->enforcePlanLimit($owner);
 
-        $roles = Role::whereNotIn('name', ['super_admin'])->get();
+        $roles = Role::whereNotIn('name', ['super_admin', 'owner'])->get();
 
         return view('users.create', compact('roles'));
     }
@@ -150,7 +154,7 @@ class UserController extends Controller
         // 🔒 Prevent super_admin assignment
         if (
             !Role::where('name', $request->role)
-                ->whereNotIn('name', ['super_admin'])
+                ->whereNotIn('name', ['super_admin', 'owner'])
                 ->exists()
         ) {
             abort(403, 'Invalid role assignment.');

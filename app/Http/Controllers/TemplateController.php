@@ -12,6 +12,15 @@ use Illuminate\Support\Str;
 
 class TemplateController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('permission:templates.view')->only(['index']);
+        $this->middleware('permission:templates.create')->only(['create', 'store', 'duplicate']);
+        $this->middleware('permission:templates.edit')->only(['edit', 'update']);
+        $this->middleware('permission:templates.delete')->only(['destroy']);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Helpers

@@ -16,7 +16,8 @@
                         Role Permission Management
                     </h1>
                     <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-                        Assign permissions to system roles
+                        View role permissions. You can check who has access to what. Permissions are fixed and cannot be
+                        changed.
                     </p>
                 </div>
             </div>
@@ -53,14 +54,15 @@
                     @csrf
                     <input type="hidden" name="role_id" value="{{ $selectedRole->id }}">
 
-                    {{-- GLOBAL SELECT ALL --}}
+                    {{-- GLOBAL SELECT ALL
                     <div class="mb-4 flex items-center gap-3">
-                        <input type="checkbox" class="rounded border-neutral-300 dark:border-neutral-600 text-primary-600"
+                        <input type="checkbox" disabled
+                            class="rounded border-neutral-300 dark:border-neutral-600 text-primary-600"
                             @click="toggleAll($event)">
                         <span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                             Select All Permissions
                         </span>
-                    </div>
+                    </div> --}}
 
                     {{-- TABLE --}}
                     <div class="overflow-x-auto">
@@ -121,7 +123,7 @@
 
                                         {{-- MODULE SELECT ALL (BEFORE VIEW) --}}
                                         <td class="p-3 text-center border border-neutral-200 dark:border-neutral-800">
-                                            <input type="checkbox"
+                                            <input type="checkbox" disabled
                                                 class="rounded border-neutral-300 dark:border-neutral-600 text-primary-600"
                                                 @click="toggleModule('{{ $module }}', $event)">
                                         </td>
@@ -132,7 +134,7 @@
                                             <td class="p-3 text-center border border-neutral-200 dark:border-neutral-800">
 
                                                 @if ($modulePermissions->contains('name', $permissionName))
-                                                    <input type="checkbox" name="permissions[]"
+                                                    <input type="checkbox" disabled name="permissions[]"
                                                         value="{{ $permissionName }}"
                                                         class="module-{{ $module }} rounded border-neutral-300 dark:border-neutral-600 text-primary-600"
                                                         {{ $selectedRole->permissions->contains('name', $permissionName) ? 'checked' : '' }}>
@@ -149,8 +151,8 @@
                     </div>
 
                     {{-- SAVE BUTTON --}}
-                    <div class="pt-6">
-                        <button type="submit"
+                    {{-- <div class="pt-6">
+                        <button type="submit" 
                             class="h-9 px-6 inline-flex items-center gap-2 text-sm font-semibold
                               border text-primary-600 border-primary-600/30 bg-primary-600/10
                               hover:bg-primary-600 hover:text-white
@@ -159,7 +161,7 @@
                             <x-lucide-save class="w-4 h-4" />
                             Save Permissions
                         </button>
-                    </div>
+                    </div> --}}
 
                 </form>
             @endif

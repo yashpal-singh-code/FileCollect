@@ -26,18 +26,20 @@
                     </div>
 
                     {{-- EDIT BUTTON --}}
-                    @if ($mode === 'view')
-                        <a href="{{ route('company-settings.show', ['edit' => 'true']) }}"
-                            class="h-9 px-4 inline-flex items-center gap-2 text-sm font-semibold
+                    @can('company_settings.edit')
+                        @if ($mode === 'view')
+                            <a href="{{ route('company-settings.show', ['edit' => 'true']) }}"
+                                class="h-9 px-4 inline-flex items-center gap-2 text-sm font-semibold
                            border border-primary-600/30 text-primary-600 bg-primary-600/10
                            hover:bg-primary-600 hover:text-white
                            dark:text-primary-400 dark:border-primary-400/40 dark:bg-primary-400/10
                            dark:hover:bg-primary-500 dark:hover:text-white
                            transition">
-                            <x-lucide-square-pen class="w-4 h-4" />
-                            Edit
-                        </a>
-                    @endif
+                                <x-lucide-square-pen class="w-4 h-4" />
+                                Edit
+                            </a>
+                        @endif
+                    @endcan
 
                 </div>
             </div>

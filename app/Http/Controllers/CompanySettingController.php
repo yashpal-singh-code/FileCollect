@@ -11,7 +11,8 @@ class CompanySettingController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware('permission:company_settings.view')->only(['show']);
+        $this->middleware('permission:company_settings.edit')->only(['store', 'update']);
     }
 
     /*

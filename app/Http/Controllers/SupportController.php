@@ -8,11 +8,6 @@ use Illuminate\Support\Facades\Auth;
 
 class SupportController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
-
     /*
     |--------------------------------------------------------------------------
     | Show Support Page

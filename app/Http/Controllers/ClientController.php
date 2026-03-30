@@ -14,7 +14,10 @@ class ClientController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware('permission:clients.view')->only(['index']);
+        $this->middleware('permission:clients.create')->only(['create', 'store']);
+        $this->middleware('permission:clients.edit')->only(['edit', 'update']);
+        $this->middleware('permission:clients.delete')->only(['destroy', 'bulkDelete']);
     }
 
     /*

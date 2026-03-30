@@ -66,3 +66,56 @@ section {
     line-height: 1.9;
     letter-spacing: -0.01em;
 }
+
+/* Website CSS */
+
+/* 🌈 Gradient */
+@keyframes gradient {
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+/* ✨ Fade */
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Utilities */
+.animate-fade-in {
+    animation: fade-in 0.8s ease forwards;
+}
+
+.animate-fade-in-up {
+    animation: fade-in-up 0.8s ease forwards;
+}
+
+.delay-100 {
+    animation-delay: 0.1s;
+}
+.delay-200 {
+    animation-delay: 0.2s;
+}
+.delay-300 {
+    animation-delay: 0.3s;
+}

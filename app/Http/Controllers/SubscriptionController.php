@@ -17,10 +17,16 @@ use App\Models\User;
 
 class SubscriptionController extends Controller
 {
+
+
     protected $api;
 
     public function __construct()
     {
+        $this->middleware('permission:subscriptions.view')->only(['index']);
+        $this->middleware('permission:subscriptions.manage')->only(['cancel', 'download']);
+
+
         $this->api = new Api(
             config('services.razorpay.key'),
             config('services.razorpay.secret')

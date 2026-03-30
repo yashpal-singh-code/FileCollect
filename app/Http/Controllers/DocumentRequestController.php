@@ -19,6 +19,19 @@ use Illuminate\Filesystem\FilesystemAdapter;
 
 class DocumentRequestController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('permission:document_requests.view')->only(['index', 'show']);
+        $this->middleware('permission:document_requests.create')->only(['create', 'store']);
+        $this->middleware('permission:document_requests.edit')->only(['edit', 'update']);
+        $this->middleware('permission:document_requests.delete')->only(['destroy']);
+        $this->middleware('permission:document_requests.send')->only(['send', 'resend']);
+        $this->middleware('permission:document_requests.view')->only(['download', 'downloadAll']);
+        $this->middleware('permission:document_requests.link')->only(['link']);
+    }
+
+
     /**
      * Display a listing of the resource.
      */

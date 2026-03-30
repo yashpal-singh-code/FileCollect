@@ -147,18 +147,19 @@
                                         per <span x-text="billing"></span>
                                     </p>
                                 @endif
-
-                                @if (!$isCurrent)
-                                    <button
-                                        @click="window.location.href = '/select-plan?plan={{ $plan->slug }}&billing=' + billing"
-                                        class="w-full mt-5 py-2 text-sm font-medium
+                                @can('subscriptions.manage')
+                                    @if (!$isCurrent)
+                                        <button
+                                            @click="window.location.href = '/select-plan?plan={{ $plan->slug }}&billing=' + billing"
+                                            class="w-full mt-5 py-2 text-sm font-medium
                                     bg-primary-600 text-white hover:bg-primary-700 transition cursor-pointer">
 
-                                        Upgrade / Downgrade
-                                    </button>
-                                @else
-                                    <p class="mt-5 text-xs text-green-600">Current Plan</p>
-                                @endif
+                                            Upgrade / Downgrade
+                                        </button>
+                                    @else
+                                        <p class="mt-5 text-xs text-green-600">Current Plan</p>
+                                    @endif
+                                @endcan
 
                             </div>
                         @endforeach

@@ -96,12 +96,13 @@
                         </a>
 
                         {{-- SEND / RESEND --}}
-                        @if ($documentRequest->status === \App\Models\DocumentRequest::STATUS_DRAFT)
-                            <form method="POST" action="{{ route('document-requests.send', $documentRequest) }}"
-                                class="flex-1 sm:flex-none min-w-0">
-                                @csrf
-                                <button type="submit"
-                                    class="w-full px-3 sm:px-4 h-10
+                        @can('document_requests.send')
+                            @if ($documentRequest->status === \App\Models\DocumentRequest::STATUS_DRAFT)
+                                <form method="POST" action="{{ route('document-requests.send', $documentRequest) }}"
+                                    class="flex-1 sm:flex-none min-w-0">
+                                    @csrf
+                                    <button type="submit"
+                                        class="w-full px-3 sm:px-4 h-10
                        inline-flex items-center justify-center gap-2
                        text-xs sm:text-sm font-medium border
                        text-primary-600 border-primary-600/30 bg-primary-600/10
@@ -109,16 +110,16 @@
                        dark:text-primary-400 dark:border-primary-400/40 dark:bg-primary-400/10
                        dark:hover:bg-primary-500 dark:hover:text-white
                        transition cursor-pointer">
-                                    <x-lucide-send class="w-4 h-4 shrink-0" />
-                                    <span class="truncate">Send</span>
-                                </button>
-                            </form>
-                        @else
-                            <form method="POST" action="{{ route('document-requests.resend', $documentRequest) }}"
-                                class="flex-1 sm:flex-none min-w-0">
-                                @csrf
-                                <button type="submit"
-                                    class="w-full px-3 sm:px-4 h-10
+                                        <x-lucide-send class="w-4 h-4 shrink-0" />
+                                        <span class="truncate">Send</span>
+                                    </button>
+                                </form>
+                            @else
+                                <form method="POST" action="{{ route('document-requests.resend', $documentRequest) }}"
+                                    class="flex-1 sm:flex-none min-w-0">
+                                    @csrf
+                                    <button type="submit"
+                                        class="w-full px-3 sm:px-4 h-10
                        inline-flex items-center justify-center gap-2
                        text-xs sm:text-sm font-medium border
                        text-primary-600 border-primary-600/30 bg-primary-600/10
@@ -126,16 +127,19 @@
                        dark:text-primary-400 dark:border-primary-400/40 dark:bg-primary-400/10
                        dark:hover:bg-primary-500 dark:hover:text-white
                        transition cursor-pointer">
-                                    <x-lucide-refresh-cw class="w-4 h-4 shrink-0" />
-                                    <span class="truncate">Resend</span>
-                                </button>
-                            </form>
-                        @endif
+                                        <x-lucide-refresh-cw class="w-4 h-4 shrink-0" />
+                                        <span class="truncate">Resend</span>
+                                    </button>
+                                </form>
+                            @endif
+                        @endcan
+
 
                         {{-- COPY LINK --}}
-                        <button id="copyLinkBtn" type="button"
-                            onclick="generateLink('{{ route('document-requests.link', $documentRequest) }}')"
-                            class="col-span-2 md:col-auto w-full md:w-auto
+                        @can('document_requests.link')
+                            <button id="copyLinkBtn" type="button"
+                                onclick="generateLink('{{ route('document-requests.link', $documentRequest) }}')"
+                                class="col-span-2 md:col-auto w-full md:w-auto
      px-4 h-10 inline-flex items-center justify-center gap-2
      text-sm font-medium border
      text-violet-600 border-violet-600/30 bg-violet-600/10
@@ -144,21 +148,22 @@
      dark:hover:bg-violet-500 dark:hover:text-white
      transition cursor-pointer">
 
-                            {{-- ICON --}}
-                            <x-lucide-link id="linkIcon" class="w-4 h-4" />
+                                {{-- ICON --}}
+                                <x-lucide-link id="linkIcon" class="w-4 h-4" />
 
-                            {{-- LOADER --}}
-                            <svg id="linkLoader" class="hidden animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg"
-                                fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                    stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor"
-                                    d="M4 12a8 8 0 018-8v4l3-3-3-3v4A10 10 0 002 12h2z">
-                                </path>
-                            </svg>
+                                {{-- LOADER --}}
+                                <svg id="linkLoader" class="hidden animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg"
+                                    fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8v4l3-3-3-3v4A10 10 0 002 12h2z">
+                                    </path>
+                                </svg>
 
-                            <span id="linkText">Copy Link</span>
-                        </button>
+                                <span id="linkText">Copy Link</span>
+                            </button>
+                        @endcan
                     </div>
                 </div>
             </div>
@@ -182,21 +187,21 @@
                                 <span>{{ $request->uploads->count() }} files</span>
                             </div>
                         </div>
-
-                        @if ($request->uploads->isNotEmpty())
-                            <a href="{{ route('requests.downloadAll', $request->id) }}"
-                                class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium border
+                        @can('document_requests.download_all')
+                            @if ($request->uploads->isNotEmpty())
+                                <a href="{{ route('requests.downloadAll', $request->id) }}"
+                                    class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium border
                    text-neutral-600 border-neutral-300 bg-neutral-100
                    hover:bg-neutral-200
                    dark:text-neutral-300 dark:border-neutral-700 dark:bg-neutral-800
                    dark:hover:bg-neutral-700
                    transition cursor-pointer">
 
-                                <x-lucide-download class="w-4 h-4" />
-                                Download All
-                            </a>
-                        @endif
-
+                                    <x-lucide-download class="w-4 h-4" />
+                                    Download All
+                                </a>
+                            @endif
+                        @endcan
                     </div>
                 </div>
 
@@ -233,21 +238,21 @@
                                 </div>
 
                             </div>
-
-                            <div class="flex items-start sm:items-center mt-3 sm:mt-0">
-                                <a href="{{ route('requests.download', $doc) }}"
-                                    class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium border
+                            @can('document_requests.download')
+                                <div class="flex items-start sm:items-center mt-3 sm:mt-0">
+                                    <a href="{{ route('requests.download', $doc) }}"
+                                        class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium border
                        text-neutral-600 border-neutral-300 bg-neutral-100
                        hover:bg-neutral-200
                        dark:text-neutral-300 dark:border-neutral-700 dark:bg-neutral-800
                        dark:hover:bg-neutral-700
                        transition cursor-pointer">
 
-                                    <x-lucide-download class="w-4 h-4" />
-                                    Download
-                                </a>
-                            </div>
-
+                                        <x-lucide-download class="w-4 h-4" />
+                                        Download
+                                    </a>
+                                </div>
+                            @endcan
                         </div>
 
                     </div>

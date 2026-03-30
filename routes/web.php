@@ -25,10 +25,10 @@ use App\Http\Controllers\Owner\OwnerUserController;
 
 Route::post('/razorpay/webhook', [SubscriptionController::class, 'webhook']);
 
-Route::view('/features', 'website.features')->name('features');
-Route::view('/pricing-page', 'website.pricing')->name('pricing.page');
-Route::view('/how-it-works', 'website.how')->name('how.it.works');
-Route::view('/blog', 'website.blog')->name('blog');
+
+// Website Routes
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/select-plan', [HomeController::class, 'select'])->name('select.plan');
 
 Route::prefix('legal')->name('legal.')->group(function () {
 
@@ -36,11 +36,12 @@ Route::prefix('legal')->name('legal.')->group(function () {
     Route::view('/privacy', 'legal.privacy')->name('privacy');
 });
 
+Route::view('/features', 'website.features')->name('features');
+Route::view('/pricing', 'website.pricing')->name('pricing');
+Route::view('/solutions', 'website.solutions')->name('solutions');
 
-// Website Routes
-Route::get('/', [HomeController::class, 'index'])->name('pricing');
-Route::get('/select-plan', [HomeController::class, 'select'])->name('select.plan');
-
+Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
+Route::post('/contact-submit', [HomeController::class, 'submit'])->name('contact.submit');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/subscriptions/checkout', [SubscriptionController::class, 'checkout'])->name('subscriptions.checkout');
