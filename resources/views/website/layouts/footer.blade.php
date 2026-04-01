@@ -8,20 +8,30 @@
               {{-- BRAND --}}
               <div class="space-y-4">
 
-                  <a href="#" class="flex items-center gap-3">
+                  {{-- LOGO --}}
+                  <a href="/#" class="flex items-center">
 
-                      <div class="flex items-center justify-center w-10 h-10">
-                          <svg viewBox="0 0 24 24" class="h-9 w-9 text-blue-600" fill="none">
+                      <!-- Icon -->
+                      <div class="flex items-center justify-center w-11 h-11">
+                          {{-- <img src="{{ asset('img/logo.svg') }}"> --}}
+                          <svg viewBox="0 0 24 24" class="h-10 w-10 text-blue-600" fill="none">
                               <path d="M6 5h8M6 5v14M6 11h6" stroke="currentColor" stroke-width="2.5"
                                   stroke-linecap="round" stroke-linejoin="round" />
+
                               <path d="M18 7a5 5 0 100 10" stroke="currentColor" stroke-width="2.5"
                                   stroke-linecap="round" stroke-linejoin="round" />
                           </svg>
                       </div>
 
-                      <div>
-                          <p class="text-lg font-semibold text-white">FileCollect</p>
-                          <p class="text-xs text-blue-500">Secure • Organize</p>
+                      <!-- Brand -->
+                      <div class="flex flex-col">
+                          <span class="block text-xl font-semibold text-blue-600 leading-tight">
+                              FileCollect
+                          </span>
+
+                          <span class="block text-xs text-blue-600 leading-tight">
+                              Secure • Organize
+                          </span>
                       </div>
 
                   </a>
