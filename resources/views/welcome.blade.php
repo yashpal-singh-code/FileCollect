@@ -833,7 +833,7 @@
                             window.location.href = '/select-plan?plan={{ $plan->slug }}&billing=' + billing;
                         "
                             :disabled="loading"
-                            class="mt-auto w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all
+                            class="mt-auto w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer
 
                         {{ $plan->is_popular
                             ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg'
